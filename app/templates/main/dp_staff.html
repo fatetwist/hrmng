@@ -1,0 +1,54 @@
+{% extends 'base.html'%}
+
+{% block title %}{{ depart.name }}{% endblock %}
+{% block body %}
+    <div class="container" style="background: white;">
+    {% if dp_staff %}
+    <!-- 列表开始 -->
+ <table class="table">
+     <tr>
+        <th>工号</th>
+        <th>姓名</th>
+        <th>年龄</th>
+        <th>联系电话</th>
+    </tr>
+    {% for u in dp_staff %}
+    <tr>
+        <th>{{ u.id }}</th>
+        <td>{{ u.name }}</td>
+        <td>{{ u.old }}</td>
+        <td>{{ u.phone }}</td>
+
+    </tr>
+    {% endfor %}
+  </table>
+
+</ul>
+    <!-- 列表结束-->
+<hr>
+    <!-- 分页导航 -->
+    <div id="pagination" style="text-align: right">
+    <ul class="pagination">
+        <li {% if not pagination.has_prev %} class="disabled" {% endif %}><a {% if pagination.has_prev %}href="{{ url_for(endpoint, page=pagination.prev_num) }}" {% else %}href="#"{% endif %}>&laquo;</a></li>
+
+        {% for x in pagination.iter_pages() %}
+            {% if x %}
+                {% if x==pagination.page %}
+                    <li class="active"><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=x) }}">{{ x }}</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=x) }}">{{ x }}</a></li>
+                {% endif %}
+            {% else %}
+                <li><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=pagination.page + 1) }}">...</a></li>
+            {% endif %}
+        {% endfor %}
+        <li {% if not pagination.has_next %} class="disabled" {% endif %}><a {% if pagination.has_next %}href="{{ url_for('main.hrmanage', filename=depart.abbr, page=pagination.next_num) }}" {% else %}href="#"{% endif %}>&raquo;</a></li>
+    </ul>
+    </div>
+    {% else %}
+        <h3>没有相关记录！</h3>
+        <br>
+
+    {% endif %}
+    </div>
+{% endblock %}
