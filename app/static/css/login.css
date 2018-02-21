@@ -1,0 +1,19 @@
+h2{
+    text-align: center;
+}
+
+div#login-form{
+    margin:0 auto;
+    width:40%;
+    height:100%;
+    text-align: center;
+}
+button#login-button{
+    width:46%;
+    line-height: 250%;
+}
+
+div#all {
+    background: white;
+    padding-bottom: 30px;
+}

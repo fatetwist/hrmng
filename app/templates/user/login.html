@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}登陆{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css')+'?v13' }}">
+{% endblock %}
+{% block body %}
+    <div class="container" id="all">
+    <div class="img-login">
+        <img src="{{ url_for('static', filename='pictures/img-login.jpg') }}">
+    </div>
+
+    <div id="login-form">
+        <h2>登陆</h2>
+        <hr>
+        <br>
+        <!-- 登陆表单开始 -->
+
+        <form>
+            <div class="input-group">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 工号</button>
+            </span>
+            <input name="username" type="text" class="form-control" placeholder="请输入工号">
+            </div>
+                <br>
+                <br>
+            <div class="input-group">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 密码</button>
+            </span>
+            <input name='password' type="text" class="form-control" placeholder="请输入密码">
+            </div>
+            <br>
+            <br>
+
+            <button class="btn btn-primary" id="login-button" type="submit">进入系统</button>
+
+        </form>
+        <!-- 登陆表单结束 -->
+    </div>
+
+    </div>
+
+{% endblock %}
