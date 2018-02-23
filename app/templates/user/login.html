@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}登陆{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css')+'?v13' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css')+'?v14' }}">
 {% endblock %}
 {% block body %}
     <div class="container" id="all">
     <div class="img-login">
-        <img src="{{ url_for('static', filename='pictures/img-login.jpg') }}">
+        <img src="{{ url_for('static', filename='pictures/img-login.jpg') }}" id="img-login">
     </div>
 
     <div id="login-form">
@@ -15,7 +15,7 @@
         <br>
         <!-- 登陆表单开始 -->
 
-        <form>
+        <form method="POST">
             <div class="input-group">
             <span class="input-group-btn">
                 <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 工号</button>
@@ -28,7 +28,7 @@
             <span class="input-group-btn">
                 <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 密码</button>
             </span>
-            <input name='password' type="text" class="form-control" placeholder="请输入密码">
+            <input name='password' type="password" class="form-control" placeholder="请输入密码">
             </div>
             <br>
             <br>

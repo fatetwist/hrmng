@@ -1,11 +1,29 @@
-from flask_login import UserMixin
+# coding=utf-8
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
+from flask_login import UserMixin
 from . import login_manager
+from datetime import date
 
 
-class Permission_p:
+def calculate_age(born):
+    today = date.today()
+    try:
+        birthday = born.replace(year=today.year)
+    except ValueError:
+    # raised when birth date is February 29
+    # and the current year is not a leap year
+        birthday = born.replace(year=today.year, day=born.day-1)
+    if birthday > today:
+        return today.year - born.year - 1
+    else:
+        return today.year - born.year
+
+
+
+class permission_p:
     # 部门
+    IT = 0x20000  # IT部
     DIRECTOR = 0x10000  # 董事会
     MANAGER = 0x8000  # 总经办
     ADMIN = 0x4000  # 行政部
@@ -20,7 +38,27 @@ class Permission_p:
     D_MANAGER_F = 0x40  # 副经理
     D_GROUP_LEADER = 0x20  # 组长
     D_EMPLOYEE = 0x10  # 员工
+    D_DIRECTOR = 0x08
     #########################
+
+
+permit_abbr = {
+	'it':permission_p.IT, # it部
+	'director':permission_p.DIRECTOR, # 董事会
+	'manager':permission_p.MANAGER, # 总经办
+	'admin':permission_p.ADMIN, # 行政部
+	'sale':permission_p.SALE,
+	'purchase':permission_p.PURCHASE,
+	'product':permission_p.PRODUCT,
+	'logistics':permission_p.LOGISTICS,
+	'hr':permission_p.HR,
+	'finance':permission_p.FINANCE,
+    'd_manager':permission_p.FINANCE,
+    'd_manager_f': permission_p.D_MANAGER_F,
+    'd_group_leader': permission_p.D_GROUP_LEADER,
+    'd_employee':permission_p.D_EMPLOYEE,
+    'd_director':permission_p.D_DIRECTOR
+}
 
 
 class permission_o:  # 具体权限
@@ -60,10 +98,31 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    @staticmethod
+    def generate_test_users():
+        for x in test_users:
+            depart = Department.query.filter_by(name=x['department']).first()
+            position = None
+            # 开始寻找position
+            for y in depart.positions:
+                if y.name == x['position']:
+                    position = y
+            if not position:
+                position = depart.positions[0]  # 默认取第一个
+            u = User(name=x['name'], position=position, department=depart, phone=x['phone'], old=x['old'])
+            db.session.add(u)
+            db.session.commit()
+
+    def verify_permission_p(self, permission_p):
+        return self.permission is not None and (self.permission.permission_p & permission_p) == permission_p
+
+    def verify_permission_o(self, permission_o):
+        return self.permission is not None and (self.permission.permission_o & permission_o) == permission_o
 
 class Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True, unique=True)
+    abbr = db.Column(db.String(64))
     name = db.Column(db.String(64),unique=True)
     users = db.relationship('User', backref='department', lazy='dynamic')
     positions = db.relationship('Position', backref='department',lazy='dynamic')
@@ -71,7 +130,7 @@ class Department(db.Model):
     @staticmethod
     def generate_default_department():
         for x in default_position:
-            department = Department(name=x)
+            department = Department(name=x,abbr=department_abbr[x])
             db.session.add(department)
             db.session.commit()
 
@@ -81,8 +140,9 @@ class Position(db.Model):
     id = db.Column(db.Integer, primary_key=True, unique=True)
     # db.Column(db.String(64))
     name = db.Column(db.String(64))
-    users = db.relationship('User', backref='position', lazy='dynamic')
+    abbr = db.Column(db.String(64))
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
+    users = db.relationship('User', backref='position', lazy='dynamic')
 
     @staticmethod
     def generate_default_position():
@@ -90,7 +150,7 @@ class Position(db.Model):
             depart = Department.query.filter_by(name=x).first()
             if depart:
                 for y in default_position[x]:
-                    position = Position(name=y, department=depart)
+                    position = Position(name=y, department=depart,abbr=position_abbr[y])
                     db.session.add(position)
                     db.session.commit()
             else:
@@ -114,19 +174,36 @@ class Permission(db.Model):
             db.session.commit()
 
 
+department_abbr = {
+    '董事会': 'director',
+    '总经办': 'manager',
+    '行政部': 'admin',
+    '财务部': 'finance',
+    '生产部': 'product',
+    '销售部': 'sale',
+    '人力资源部': 'hr',
+    '采购部': 'purchase',
+    '后勤部': 'logistics',
+    'IT部': 'it'
+}
 
-
-
+position_abbr ={
+    '经理': 'd_manager',
+    '主管': 'd_manager',
+    '副经理': 'd_manager_f',
+    '员工': 'd_employee',
+    '董事长': 'd_director'
+}
 
 default_position = {
     '董事会': ['董事长'],
     '总经办': ['经理', '员工'],
-    '行政部': ['主管', '员工'],
+    '行政部': ['经理', '员工'],
     '财务部': ['经理', '员工'],
-    '生产部': ['主管', '员工'],
-    '销售部': ['主管', '员工'],
-    '人力资源部': ['主管', '员工'],
-    '采购部': ['主管', '员工'],
+    '生产部': ['经理', '员工'],
+    '销售部': ['经理', '员工'],
+    '人力资源部': ['经理', '员工'],
+    '采购部': ['经理', '员工'],
     '后勤部': ['经理', '员工'],
     'IT部': ['经理', '员工']
 }
@@ -142,5 +219,22 @@ default_permission = {
     '销售部门管理': [0x87F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
     '人力资源部门管理': [0x47F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
     '采购部门管理': [0x27F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '后勤部门管理': [0x17F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE]
+    '后勤部门管理': [0x17F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
+    'IT部门管理': [0x2000, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE]
 }
+
+
+test_users = [
+    {'name': '张三', 'department': '董事会', 'phone': '010123456', 'old': 18, 'position': '董事长'},
+    {'name': '李四', 'department': 'IT部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张一', 'department': '人力资源部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张二', 'department': '采购部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张四', 'department': '销售部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张五', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张六', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张七', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
+    {'name': '张八', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'}
+]
+
+
+

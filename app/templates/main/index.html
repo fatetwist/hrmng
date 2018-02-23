@@ -45,6 +45,7 @@
 {% endblock %}
 
 {% block body %}
+    <div class="container">
   <ul class="mainmenu">
         <li><a href="/hrmanage/director" ><b><img src="{{ url_for('static',filename='pictures/menu/director.png') }}" /></b><span>董事会</span></a></li>
         <li><a href="/hrmanage/manager" ><b><img src="{{ url_for('static',filename='pictures/menu/director.png') }}" /></b><span>总经办</span></a></li>
@@ -57,4 +58,5 @@
         <li><a href="/hrmanage/purchase" ><b><img src="{{ url_for('static',filename='pictures/menu/buy.png') }}" /></b><span>采购部</span></a></li>
         <li><a href="/hrmanage/logistics" ><b><img src="{{ url_for('static',filename='pictures/menu/logistics.png') }}" /></b><span>后勤部</span></a></li>
     </ul>
+    </div>
 {% endblock %}

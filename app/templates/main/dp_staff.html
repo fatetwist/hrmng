@@ -3,6 +3,7 @@
 {% block title %}{{ depart.name }}{% endblock %}
 {% block body %}
     <div class="container" style="background: white;">
+        <h1>{{ depart.name }}</h1>
     {% if dp_staff %}
     <!-- 列表开始 -->
  <table class="table">
@@ -18,6 +19,17 @@
         <td>{{ u.name }}</td>
         <td>{{ u.old }}</td>
         <td>{{ u.phone }}</td>
+
+        {% if current_user.verify_permission_o(permit_o.EVALUATE) %}
+            <td>
+            <button class="btn btn-default">综合评价</button>
+            </td>
+        {% endif %}
+        {% if current_user.verify_permission_o(permit_o.ADD_AND_REMOVE) %}
+            <td>
+            <button class="btn btn-default">删除成员</button>
+            </td>
+        {% endif %}
 
     </tr>
     {% endfor %}

@@ -2,8 +2,6 @@ from flask import Flask
 from config import config
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
-from .main import main as main_blueprint
-from .user import user as user_blueprint
 
 
 db = SQLAlchemy()
@@ -20,10 +18,8 @@ def create_app(config_name='default'):
     db.init_app(app)
 
     # 注册blueprint
+    from .main import main as main_blueprint
+    from .user import user as user_blueprint
     app.register_blueprint(main_blueprint)
     app.register_blueprint(user_blueprint, url_prefix='/user')
-
-
-
-
     return app

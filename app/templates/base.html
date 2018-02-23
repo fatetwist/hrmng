@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+ <meta http-equiv="content-language" content="zh-CN" />
     <title>{% block title %}{% endblock %} - 人力资源管理系统</title>
 <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
 <script src="{{ url_for('static',filename='js/jquery-1.11.1.min.js') }}"></script>
     <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
 <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<link rel="stylesheet" href="{{ url_for('static',filename='css/base.css') }}">
+<link rel="stylesheet" href="https://code.jquery.com/jquery-1.10.2.js">
 
 {% block head %}{% endblock %}
 </head>
-<body style="background: url({{ url_for('static', filename='pictures/img-back.jpg')}}) fixed no-repeat;background-size:cover;">
+<!--
+<body style="background: url({{ url_for('static', filename='pictures/img-back.jpg')}}) no-repeat;background-size: cover;">
+-->
+<body style="background: #000;">
+
+</body>
 <nav class="navbar navbar-default">
   <div class="container-fluid">
     <!-- Brand and toggle get grouped for better mobile display -->
@@ -23,28 +29,43 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="#">企业员工管理</a>
+      <a class="navbar-brand" href="{{ url_for('main.index') }}">企业员工管理</a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav navbar-right">
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">用户 <span class="caret"></span></a>
+
+          {% if current_user.is_authenticated %}
+              <!-- 下拉菜单 -->
+        <li>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ current_user.name }}<span class="caret"></span></a>
           <ul class="dropdown-menu">
-            <li><a href="#">登陆系统</a></li>
             <li><a href="#">个人信息</a></li>
             <li><a href="#">修改密码</a></li>
             <li role="separator" class="divider"></li>
-            <li><a href="#">退出系统</a></li>
+            <li><a href="{{ url_for('user.logout') }}">退出系统</a></li>
           </ul>
+              {% else %}
+              <li><a href="{{ url_for('user.login') }}">登陆系统</a></li>
+              {% endif %}
+
         </li>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
+<div class="container">
+    {% for m in get_flashed_messages() %}
 
+       <div class="alert alert-warning">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{ m }}
+    </div>
+{% endfor %}
+</div>
 {% block body %}
+
 {% endblock %}
 </body>
 </html>

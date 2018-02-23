@@ -4,7 +4,7 @@ basedir = os.path.dirname(os.path.abspath(__file__))
 
 class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
-
+    SECRET_KEY = os.urandom(16)
 
 username = 'root'
 password = '123456'
@@ -21,3 +21,4 @@ config = {
     'development': Development,
     'default': Development
 }
+

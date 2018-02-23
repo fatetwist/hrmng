@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% block title %}批量导入员工{% endblock %}
+{% block head %}
+    <script>
+        $(document).ready(function(){
+            /* 设置文件选择验证 */
+            $('input#file-excel').change(function () {
+               var v = $(this).val();
+               if(v!=''){
+               var fileExtension = v.substring(v.lastIndexOf('.')+ 1 );
+                if (fileExtension!='xls'&&fileExtension!='xlsx'){
+                   $(this).val('');
+                   alert('文件格式不符合！请重新选择excel格式文件！');
+                }
+            }});
+            /* 设置上传按钮事件 */
+            $('button#btn-upload').click(function(){
+                /* 验证文件是否选择 */
+                var ipt = $('input#file-excel');
+                var v = ipt.val();
+                if(v==''){
+                    alert('文件未选择！');
+                    return false
+                }
+               /* 验证文件格式 */
+               var fileExtension = v.substring(v.lastIndexOf('.')+ 1 );
+                if (fileExtension!='xls'&&fileExtension!='xlsx'){
+                   ipt.val('');
+                   alert('文件格式不符合！请重新选择excel格式文件！');
+                   return false;
+                }
+                var data = new FormData();
+                alert('begin to select file');
+                data.append('file-excel',$('input#file-excel').get(0).files[0]);
+                $.ajax({url: "{{ url_for('main.add_to_sql_by_excel') }}",
+                    type: 'POST',
+                    data:data,
+                    success: function(str){
+                    var res_json = JSON.parse(str);
+                    var user_list = res_json['user_list'];
+                        if (str.status===0){
+                            alert('成功'+res_json['success']+'\n'+'失败'+res_json['error']);
+                            for(var i=0;i<user_list.length;i++){
+                                var name = user_list[i]['name'];
+                                var department = user_list[i]['department'];
+                                var position = user_list[i]['position'];
+                                var address = user_list[i]['address'];
+                                var phone = user_list[i]['phone'];
+                                var birth = user_list[i]['birth'];
+                                alert('开始添加元素'+name+department+position+address+phone+birth);
+                                var table_str = '<tr id="user-to-add">' +
+                    '<td id="name">' + name + '</td>' +
+                    '<td id="department">' + department + '</td>' +
+                    '<td id="position">' + position + '</td>' +
+                    '<td id="address">' + address + '</td>' +
+                    '<td id="phone">' + phone + '</td>' +
+                    '<td id="birth">' + birth + '</td>'
+                                    + '</tr>'
+                                ;
+                                $('table#table-res').append(table_str);
+                            }
+                        }
+                        else
+                        {
+                            alert('成功'+res_json['success']+'\n'+'失败'+res_json['error']);
+                                for(var z=0;z<user_list.length;z++){
+                                var name = user_list[z]['name'];
+                                var department = user_list[z]['department'];
+                                var position = user_list[z]['position'];
+                                var address = user_list[z]['address'];
+                                var phone = user_list[z]['phone'];
+                                var birth = user_list[z]['birth'];
+                                var table_str = '<tr id="user-to-add">' +
+                    '<td id="name">' + name + '</td>' +
+                    '<td id="department">' + department + '</td>' +
+                    '<td id="position">' + position + '</td>' +
+                    '<td id="address">' + address + '</td>' +
+                    '<td id="phone">' + phone + '</td>' +
+                    '<td id="birth">' + birth + '</td>'
+                                    + '</tr>'
+                                ;
+                                $('table#table-res').append(table_str);
+                            }
+                        }
+
+                    },
+                    processData:false,
+                    cache:false,
+                    contentType: false,
+                    timeout: 60000,
+                    error: function(){alert('未知错误！')}
+
+
+                    }
+            {#        async:true#}
+            {#    $.post("{{ url_for('main.add_to_sql_by_excel') }}",#}
+            {#        {file_excel:$('input#file-excel').get(0).files[0]},#}
+            {#        function(res_data){#}
+            {#            alert(res_data)#}
+            {#        }#}
+
+                )}
+                )
+
+            /* 设置提交按钮事件 */
+                $('button#add-to-sql').click(function () {
+                    /* 验证是否有内容 */
+                    var trs = $('tr#user-to-add');
+                    if(trs.length<1){
+                        alert('没有可提交的内容！')
+                        return false
+                    }
+
+                    /* 获得数字对应数据名的字典 */
+                    var th = $('table#table-users-to-add tr th');
+                    var dict = {};
+                    th.each(function(i){
+                        dict[i] = $(this).text()
+                    });
+                    /*  */
+                var list = [];
+                trs.each(function(){
+                    var children = $(this).children();
+                    var list_u = {};
+
+                    children.each(function (i,u) {
+                        var content = $(u).text();
+                        list_u[dict[i]] = content;
+
+                    });
+                list.push(list_u)
+                });
+
+                var json_list = JSON.stringify(list);
+                var url = '{{ url_for('main.add_to_sql') }}';
+                $.post(url,
+                    {json_list:json_list}
+
+
+                    ,function (res_data) {
+                        var data = JSON.parse(res_data);
+                        if(data['status']==1){
+                            /* 显示提交成功信息 并 清除表格 */
+                            alert('处理成功'+data['success']+'\n' +
+                                '处理失败'+data['false'])
+                        }
+                        else{
+                            alert('提交失败！')
+                        }
+                    }
+                    )
+                });
+            /* 设置添加按钮的事件 */
+            $('button#add').click(function(){
+                /* 检查提交信息 */
+
+                var name = $('input#name').val();
+                var department = $('a.department').text();
+                var position = $('a.position').text();
+                var address = $('input#address').val();
+                var phone = $('input#phone').val();
+                var birth = $('input#birth').val();
+                var u_str = '<tr id="user-to-add">' +
+                    '<td id="name">' + name + '</td>' +
+                    '<td id="department">' + department + '</td>' +
+                    '<td id="position">' + position + '</td>' +
+                    '<td id="address">' + address + '</td>' +
+                    '<td id="phone">' + phone + '</td>' +
+                    '<td id="birth">' + birth + '</td>' +
+                    '<td id="operation">' + '<button id="remove-user-to-add"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>' +
+                    '</tr>';
+                /* 加入列表 */
+                if ((name!='')&&(department!='')&&(position!='')&&address!=''&&phone!=''&&birth!=''){
+                    $('table.table').append(u_str)
+
+                }
+                /* 设置按钮事件 */
+                $('button#remove-user-to-add').click(
+                    function(){
+                        $(this).parent().parent().remove()
+                    }
+                )
+
+            });
+
+        /* 读取json并渲染html */
+        var xmlhttp;
+        if (window.XMLHttpRequest)
+        {
+            //  IE7+, Firefox, Chrome, Opera, Safari 浏览器执行代码
+            xmlhttp=new XMLHttpRequest();
+        }
+        else
+        {
+            // IE6, IE5 浏览器执行代码
+            xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange=function()
+        {
+
+            if (xmlhttp.readyState==4 && xmlhttp.status==200)
+            {
+                var dp_json = JSON.parse(xmlhttp.responseText)
+                for (var key in dp_json){
+                    var d_str = '<li><a href="#">'+ key +'</a></li>';
+                    $('.d_menu').append(d_str);
+
+                }
+                /* 开始设置事件 */
+                var depart_li = $('ul.d_menu li a');
+                depart_li.each(function(){
+                    $(this).click(function(){
+                        var key = $(this).text();
+                        var arrow = '<span class="caret"></span>';
+                        var a = $(this).parent().parent().prevAll('a')
+                        a.text(key);
+                        a.append(arrow);
+
+                        $('.p_menu').empty();
+                        for(var i=0;i<dp_json[key].length;i++){
+                            var p_str = dp_json[key][i];
+                            p_str = '<li><a href="#">'+ p_str +'</a></li>';
+                            $('.p_menu').append(p_str)
+                        }
+                        /* 设定新菜单的事件 */
+                        $('ul.p_menu li a').each(function(){
+
+                            $(this).click(function(){
+                                var arrow = '<span class="caret"></span>';
+                                var a = $(this).parent().parent().prevAll('a')
+                                a.text($(this).text());
+                                a.append(arrow)
+
+                            })
+                        })
+                    })
+                })
+
+            }
+        };
+        xmlhttp.open("GET","/batch_staff/getdepartandposition",true);
+        xmlhttp.send();
+
+
+        })
+
+
+
+
+    </script>
+    <style>
+    div#div-add{
+        margin-bottom: 15px;
+    }
+    table.table tr th#name,td#name{
+        width: 10%;
+    }
+    table.table tr th#department,td#department{
+        width: 10%;
+    }
+    table.table tr th#position,td#department{
+        width: 10%
+    }
+    table.table tr th#address,td#address{
+        width: 30%;
+    }
+    table.table tr th#phone,td#phone{
+        width: 15%;
+    }
+    table.table tr th#birth,td#birth{
+        width: 15%;
+    }
+    table.table tr th#operation,td#operation{
+        width: 10%;
+    }
+
+    </style>
+{% endblock %}
+{% block body %}
+    <div class="container" style="background: white;">
+<h1>批量导入员工</h1>
+    <hr>
+    <div style="border: 1px grey;">
+    <h3>一、在线录入</h3>
+    <table class="table" id="table-users-to-add">
+        <tr>
+            <th id="name">姓名</th>
+            <th id="department">部门</th>
+            <th id="position">职位</th>
+            <th id="address">家庭住址</th>
+            <th id="phone">联系电话</th>
+            <th id="birth">出生年月</th>
+            <th id="operation">操作</th>
+        </tr>
+    </table>
+    <div class="batch_btn" style="text-align: right;">
+        <button id="add-to-sql" style="margin: 20px;"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span>提交</button>
+    </div>
+        <div id="div-input" class="container">
+<div class="input-group col-md-4" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">姓名</span>
+  <input type="text" class="form-control" id="name" placeholder="张三" aria-describedby="basic-addon1" maxlength="8">
+</div>
+    <div class="input-group col-md-4" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">部门</span>
+     <a href="#" class="dropdown-toggle department" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">请选择部门<span class="caret"></span></a>
+          <ul class="dropdown-menu d_menu">
+
+          </ul>
+    </div>
+    <div class="input-group col-md-4" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">职位</span>
+       <a href="#" class="dropdown-toggle position" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">请选择职位<span class="caret"></span></a>
+          <ul class="dropdown-menu p_menu">
+
+          </ul>
+    </div>
+            <div class="input-group" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">出生年月</span>
+  <input onkeyup="(this.v=function(){this.value=this.value.replace(/[^\d/]/,'');}).call(this)" onblur="this.v();"  type="text" class="form-control" id="birth" placeholder="格式：2018/1/1" aria-describedby="basic-addon1" maxlength="11">
+    </div>
+    <div class="input-group" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">家庭住址</span>
+  <input type="text" class="form-control" id="address" placeholder="江西省南昌市" aria-describedby="basic-addon1" maxlength="64">
+    </div>
+    <div class="input-group" id="div-add">
+  <span class="input-group-addon" id="basic-addon1">联系电话</span>
+  <input onkeyup="(this.v=function(){this.value=this.value.replace(/[^\d\-]/,'');}).call(this)" onblur="this.v();" type="text" class="form-control" id="phone" placeholder="0797-123456" aria-describedby="basic-addon1" maxlength="11">
+    </div>
+
+    <div style="border: 1px grey;">
+        <button id="add"><span class="glyphicon glyphicon-plus" aria-hidden="true">添加</span></button>
+        </div>
+            </div>
+    <h3>二、文档录入</h3>
+    </div>
+        <lable>请上传Excel文件：</lable><input type="file" id="file-excel" style="display: inline-block;"><br>
+
+        <button id="btn-upload" style="margin:10px;">立即上传</button>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table" id="table-res">
+            <tr>
+                <th id="name">姓名</th>
+                <th id="department">部门</th>
+                <th id="position">职位</th>
+                <th id="address">家庭住址</th>
+                <th id="phone">联系电话</th>
+                <th id="birth">出生年月</th>
+            </tr>
+                </table>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}
