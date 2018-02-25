@@ -4,3 +4,4 @@ flask-migrate
 flask-script
 xlrd
 xlwt
+request

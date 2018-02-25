@@ -1,12 +1,216 @@
 {% extends 'base.html'%}
 
 {% block title %}{{ depart.name }}{% endblock %}
+{% block head %}
+    <script>
+    function list_add_user(table,id,name,old,phone){
+        var str = '<tr id="' + id + '">'+
+            '<td>'+id+'<td>' +
+            '<td>'+name+'<td>' +
+            '<td>'+old+'<td>' +
+            '<td>'+phone+'<td>' +
+            '</tr>';
+        table.append(str);
+    }
+    function list_remove_user(table,id){
+        table.children('#'+id).remove();
+    }
+
+    $(document).ready(
+        function () {
+            /* 设置姓名查找按钮 */
+            {#$('button#filter_name').click(function () {#}
+            {#    var name = $('input#filter_name').val();#}
+            {#    var trs = $('table#dp_staff_list tr');#}
+            {#    var ths = $('table#dp_staff_list tr th');#}
+            {#    var dict = {};#}
+            {#    ths.each(function (i,th) {#}
+            {#        dict[i] = th.text();});#}
+    $('button#filter_name').click(function () {
+            var name = $('input#filter_name').val();
+                    /* 在本页面筛选 */
+                if($('input#this_page').is(':checked')){
+                                var trs = $('table#dp_staff_list tr');
+                trs.each(function(i,tr){
+                   if (i!=0){
+                       var c = $(tr).children();
+                       c.each(function (i,td) {
+                           if(i==1){  /* 索引i为1时得到text为name的tr*/
+                               if($(td).text()!=name){
+
+                                   $(tr).hide();
+                               }
+                               else{
+
+                               }
+                           }
+
+                       })
+                   }
+                });
+                }
+                else{
+                    /* 在本部筛选 */
+                    var per_page = "{{ per_page }}";
+                    var url = "{{ url_for('main.dp_staff',department=depart.abbr) }}"+"?per_page="+per_page+"&u_name="+name;
+                    window.location.href=url;
+                }
+            });
+    /* 设置工号查找按钮 */
+    $('button#filter_id').click(function(){
+       var id = $('input#filter_id').val();
+                    /* 在本页面筛选 */
+                if($('input#this_page').is(':checked')){
+                                var trs = $('table#dp_staff_list tr');
+                trs.each(function(i,tr){
+                   if (i!=0){
+                       var c = $(tr).children();
+                       c.each(function (i,td) {
+                           if(i==0){  /* 索引i为1时得到text为name的tr*/
+                               if($(td).text()!=id){
+
+                                   $(tr).hide();
+                               }
+                               else{
+                                   $(tr).show()
+                               }
+                           }
+
+                       })
+                   }
+                });
+                }
+                else{
+                    /* 在本部筛选 */
+                    var per_page = "{{ per_page }}";
+                    var url = "{{ url_for('main.dp_staff',department=depart.abbr) }}"+"?per_page="+per_page+"&u_id="+id;
+                    window.location.href=url;
+                }
+            });
+
+
+    /* 设置年龄筛选按钮 */
+        $('button#filter_condition').click(function(){
+       var old_start = parseInt($('input#filter_old_start').val());
+       var old_over = parseInt($('input#filter_old_over').val());
+                    /* 在本页面筛选 */
+                if($('input#this_page').is(':checked')){
+                    var trs = $('table#dp_staff_list tr');
+                trs.each(function(i,tr){
+                   if (i!=0){
+                       var c = $(tr).children();
+                       c.each(function (i,td) {
+                           if(i==2){  /* 索引i为1时得到text为name的tr*/
+                               u_old =parseInt($(td).text());
+                               alert(u_old);
+                               if((u_old>=old_start)&&(u_old<=old_over)){
+                                   $(tr).show();
+                               }
+                               else{
+                                   $(tr).hide()
+                               }
+                           }
+
+                       })
+                   }
+                });
+                }
+                else{
+                    /* 在本部筛选 */
+                    var per_page = "{{ per_page }}";
+                    var url = "{{ url_for('main.dp_staff',department=depart.abbr) }}"+"?per_page="+per_page+"&old_start="+old_start+'&old_over='+old_over;
+                    window.location.href=url;
+                }
+
+        });
+
+                /* 设置删除按钮 */
+            $('button.delete_staff').click(function(){
+                var id = $(this).attr('id');
+                {#$.ajax(#}
+                {#    {#}
+                {#        url: "{{ url_for('main.remove_staff') }}",#}
+                {#        type: 'POST',#}
+                {#        data: {id: id},#}
+                {#        success: function (data) {#}
+                {#            var data_json = JSON.parse(data);#}
+                {#            if (data_json['status']==1){#}
+                {#                alert(data_json['message'])#}
+                {#            }#}
+                {#            else{#}
+                {#                alert(data_json['message'])#}
+                {#            }#}
+                {#        },#}
+                {#        error: function(){alert('提交信息有误！')},#}
+                {#        async: false,#}
+                {#        dataType: "json"#}
+                {##}
+                {##}
+                {#    }#}
+                id = parseInt(id);
+                $.post(
+                    "{{ url_for('main.remove_staff') }}",
+                    {id:id},
+                    function(data) {
+                        var data_json = JSON.parse(data);
+                        if (data_json['status'] == 1) {
+                            $('table#dp_staff_list tr#'+id).remove();
+                            alert(data_json['message']);
+                        }
+                        else {
+                            alert(data_json['message'])
+
+                        }
+                    }
+                );
+
+
+            });
+            /* 设置编辑按钮事件 */
+
+        $('button.btn-edit').click(function(){
+            var id=parseInt($(this).attr('id'));
+            var url = "{{ url_for('user.edit_staff') }}"+"?id="+id;
+            window.open(url)
+
+        })
+
+
+        })
+    </script>
+{% endblock %}
 {% block body %}
+
     <div class="container" style="background: white;">
         <h1>{{ depart.name }}</h1>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">筛选</h3>
+        </div>
+  <div class="panel-body">
+       <div class="filter">
+            <label style="display: block;"><input type="checkbox" id="this_page"> 在本页面筛选</label>
+           <hr>
+           <div class="filter-exact">
+               <h5>精确查找</h5>
+           <label>姓名：</label><input type="input" id="filter_name" maxlength="8"> <button class="btn btn-default" id="filter_name">查找</button><br>
+               <label>工号：</label><input type="input" id="filter_id" maxlength="8"> <button class="btn btn-default" id="filter_id">查找</button>
+               <hr>
+               <h5>条件筛选</h5>
+               <label>年龄范围：</label><input type="input" id="filter_old_start">至<input type="input" id="filter_old_over">
+               <button class="btn btn-default" id="filter_condition">确定筛选</button>
+            </div>
+        </div>
+</div>
+    </div>
     {% if dp_staff %}
     <!-- 列表开始 -->
- <table class="table">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3>员工列表</h3>
+            </div>
+        <div class="panel-body">
+ <table class="table" id="dp_staff_list">
      <tr>
         <th>工号</th>
         <th>姓名</th>
@@ -14,7 +218,7 @@
         <th>联系电话</th>
     </tr>
     {% for u in dp_staff %}
-    <tr>
+    <tr id="{{ u.id }}">
         <th>{{ u.id }}</th>
         <td>{{ u.name }}</td>
         <td>{{ u.old }}</td>
@@ -24,43 +228,42 @@
             <td>
             <button class="btn btn-default">综合评价</button>
             </td>
+
         {% endif %}
         {% if current_user.verify_permission_o(permit_o.ADD_AND_REMOVE) %}
             <td>
-            <button class="btn btn-default">删除成员</button>
+            <button class="btn btn-default btn-edit" id="{{ u.id }}">编辑</button>
+            <button class="btn btn-danger delete_staff" id="{{ u.id }}">删除成员</button>
             </td>
         {% endif %}
 
     </tr>
     {% endfor %}
   </table>
-
-</ul>
-    <!-- 列表结束-->
+            <!-- 列表结束-->
 <hr>
     <!-- 分页导航 -->
     <div id="pagination" style="text-align: right">
     <ul class="pagination">
-        <li {% if not pagination.has_prev %} class="disabled" {% endif %}><a {% if pagination.has_prev %}href="{{ url_for(endpoint, page=pagination.prev_num) }}" {% else %}href="#"{% endif %}>&laquo;</a></li>
+        <li {% if not pagination.has_prev %} class="disabled" {% endif %}><a {% if pagination.has_prev %}href="{{ url_for('main.dp_staff',department=depart.abbr, page=pagination.prev_num) }}" {% else %}href="#"{% endif %}>&laquo;</a></li>
 
         {% for x in pagination.iter_pages() %}
             {% if x %}
                 {% if x==pagination.page %}
-                    <li class="active"><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=x) }}">{{ x }}</a></li>
+                    <li class="active"><a href="{{ url_for('main.dp_staff', department=depart.abbr, page=x) }}">{{ x }}</a></li>
                 {% else %}
-                    <li><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=x) }}">{{ x }}</a></li>
+                    <li><a href="{{ url_for('main.dp_staff', department=depart.abbr, page=x) }}">{{ x }}</a></li>
                 {% endif %}
             {% else %}
-                <li><a href="{{ url_for('main.hrmanage', filename=depart.abbr, page=pagination.page + 1) }}">...</a></li>
+                <li><a href="{{ url_for('main.dp_staff', department=depart.abbr, page=pagination.page + 1) }}">...</a></li>
             {% endif %}
         {% endfor %}
-        <li {% if not pagination.has_next %} class="disabled" {% endif %}><a {% if pagination.has_next %}href="{{ url_for('main.hrmanage', filename=depart.abbr, page=pagination.next_num) }}" {% else %}href="#"{% endif %}>&raquo;</a></li>
+        <li {% if not pagination.has_next %} class="disabled" {% endif %}><a {% if pagination.has_next %}href="{{ url_for('main.dp_staff', department=depart.abbr, page=pagination.next_num) }}" {% else %}href="#"{% endif %}>&raquo;</a></li>
     </ul>
     </div>
     {% else %}
         <h3>没有相关记录！</h3>
         <br>
-
     {% endif %}
-    </div>
+        </div>
 {% endblock %}

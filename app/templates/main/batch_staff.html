@@ -48,7 +48,7 @@
                                 var phone = user_list[i]['phone'];
                                 var birth = user_list[i]['birth'];
                                 alert('开始添加元素'+name+department+position+address+phone+birth);
-                                var table_str = '<tr id="user-to-add">' +
+                                var table_str = '<tr id="user-already-added">' +
                     '<td id="name">' + name + '</td>' +
                     '<td id="department">' + department + '</td>' +
                     '<td id="position">' + position + '</td>' +
@@ -70,7 +70,7 @@
                                 var address = user_list[z]['address'];
                                 var phone = user_list[z]['phone'];
                                 var birth = user_list[z]['birth'];
-                                var table_str = '<tr id="user-to-add">' +
+                                var table_str = '<tr id="user-already-added">' +
                     '<td id="name">' + name + '</td>' +
                     '<td id="department">' + department + '</td>' +
                     '<td id="position">' + position + '</td>' +
@@ -100,14 +100,15 @@
             {#        }#}
 
                 )}
-                )
+                );
 
             /* 设置提交按钮事件 */
                 $('button#add-to-sql').click(function () {
                     /* 验证是否有内容 */
                     var trs = $('tr#user-to-add');
+                    alert(trs.length);
                     if(trs.length<1){
-                        alert('没有可提交的内容！')
+                        alert('没有可提交的内容！');
                         return false
                     }
 
@@ -171,7 +172,7 @@
                     '</tr>';
                 /* 加入列表 */
                 if ((name!='')&&(department!='')&&(position!='')&&address!=''&&phone!=''&&birth!=''){
-                    $('table.table').append(u_str)
+                    $('table#table-users-to-add').append(u_str)
 
                 }
                 /* 设置按钮事件 */

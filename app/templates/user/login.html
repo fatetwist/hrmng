@@ -2,6 +2,16 @@
 {% block title %}登陆{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css')+'?v14' }}">
+    <script>
+    $(document).ready(function () {
+                /* 标签按钮获得焦点事件 */
+            $('button#label-btn').focus(function(){
+                $(this).parent().parent().children('input').focus();
+            });
+    });
+
+
+    </script>
 {% endblock %}
 {% block body %}
     <div class="container" id="all">
@@ -18,7 +28,7 @@
         <form method="POST">
             <div class="input-group">
             <span class="input-group-btn">
-                <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 工号</button>
+                <button class="btn btn-default" type="button" id="label-btn"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 工号</button>
             </span>
             <input name="username" type="text" class="form-control" placeholder="请输入工号">
             </div>
@@ -26,7 +36,7 @@
                 <br>
             <div class="input-group">
             <span class="input-group-btn">
-                <button class="btn btn-default" type="button"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 密码</button>
+                <button class="btn btn-default" type="button" id="label-btn"><span class='glyphicon glyphicon-menu-right' aria-hidden="true"></span> 密码</button>
             </span>
             <input name='password' type="password" class="form-control" placeholder="请输入密码">
             </div>

@@ -20,6 +20,15 @@ def calculate_age(born):
         return today.year - born.year
 
 
+def get_birth_date(birth):
+    birth = birth.split('/')
+    year = int(birth[0])
+    month = int(birth[1])
+    day = int(birth[2])
+    birth_date = date(year, month, day)
+    return birth_date
+
+
 
 class permission_p:
     # 部门
@@ -56,8 +65,8 @@ permit_abbr = {
     'd_manager':permission_p.FINANCE,
     'd_manager_f': permission_p.D_MANAGER_F,
     'd_group_leader': permission_p.D_GROUP_LEADER,
-    'd_employee':permission_p.D_EMPLOYEE,
-    'd_director':permission_p.D_DIRECTOR
+    'd_employee': permission_p.D_EMPLOYEE,
+    'd_director': permission_p.D_DIRECTOR
 }
 
 
@@ -75,17 +84,27 @@ def load_user(user_id):
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+
+    def get_age(self):
+        return calculate_age(self.birth)
+
     id = db.Column(db.Integer, primary_key=True, unique=True)
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64),nullable=False)
     position_id = db.Column(db.Integer,db.ForeignKey('positions.id'))
     department_id = db.Column(db.Integer,db.ForeignKey('departments.id'))
     address = db.Column(db.Text)
-    birth = db.Column(db.Date)
-    old = db.Column(db.Integer)
-    phone = db.Column(db.String(11))
+    birth = db.Column(db.Date, nullable=False)
+    phone = db.Column(db.String(11),nullable=False)
     login_permission = db.Column(db.Boolean, default=True)
+    old = db.Column(db.Integer)
     permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'))
     password_hash = db.Column(db.String(128))
+
+
+
+    # @property
+    # def old(self):
+    #     return calculate_age(self.birth)
 
     @property
     def password(self):
@@ -113,11 +132,30 @@ class User(UserMixin, db.Model):
             db.session.add(u)
             db.session.commit()
 
-    def verify_permission_p(self, permission_p):
-        return self.permission is not None and (self.permission.permission_p & permission_p) == permission_p
+    @staticmethod
+    def re_old():
+        us = User.query.all()
+        for u in us:
+            u.old = calculate_age(u.birth)
+        db.session.commit()
 
-    def verify_permission_o(self, permission_o):
-        return self.permission is not None and (self.permission.permission_o & permission_o) == permission_o
+
+    def verify_permission_by_user(self,u):
+        dp = permit_abbr[u.department.abbr]|permit_abbr[u.position.abbr]
+        if not self.verify_permission_p(dp):
+            return False
+
+        if not self.verify_permission_o(permission_o.ADD_AND_REMOVE|permission_o.EVALUATE):
+            return False
+        else:
+            return True
+
+    def verify_permission_p(self, p):
+        return self.permission is not None and (self.permission.permission_p & p) == p
+
+    def verify_permission_o(self, p):
+        return self.permission is not None and (self.permission.permission_o & p) == p
+
 
 class Department(db.Model):
     __tablename__ = 'departments'
