@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}权限管理{% endblock %}
+{% block head %}
+    <script>
+    $(document).ready(function () {
+        $('button#permit_new').click(function () {
+            window.location.href = "{{ url_for('user.permit_new') }}"
+        });
+        $('button#permit_old').click(function () {
+            window.location.href = "{{ url_for('user.permit_old') }}"
+        });
+    })
+    </script>
+    <style>
+
+div#new_permit,div#old_permit{
+    text-align: center;
+}
+div button{
+    margin: 10px;
+    padding: 15px;
+    font-size:20px;
+    width:45%;
+}
+h1{
+    text-align: center;
+}
+    </style>
+{% endblock %}
+{% block body %}
+<div class="container" style="background: white;">
+    <h1>权限管理</h1>
+
+<div class="panel panel-default">
+<div class="panel-body">
+    <div id="new_permit">
+        <button id="permit_new" class="btn2-default">新增权限</button>
+    </div>
+    <div id="old_permit">
+        <button id="permit_old" class="btn2-default">管理已有权限</button>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

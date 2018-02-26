@@ -2,20 +2,32 @@
 {% block title %}编辑 {{ u.id }}{% endblock %}
 {% block head %}
     <script>
-        /* 函数：设定新菜单的事件 */
-        function set_p_menu(){
-    $('ul.p_menu li a').each(function(){
+    /* function save info */
+    function save_info (id, n,d, p, b, a, ph,l, pass) {
+        $.ajax(
+            {
+                url:"{{ url_for('user.edit_staff') }}",
+                data:{id:id,n:n, d:d, p:p, b:b, a:a, ph:ph, l:l,password: pass},
+                type: 'post',
+                async: false,
+                success: function (data) {
+                    var data_json = JSON.parse(data);
+                  if(data_json['status']==1){
+                      alert(data_json['message']);
+                      window.reload();
+                  }
+                  else{
+                      alert(data_json['message']);
+                  }
 
-        $(this).click(function(){
-            var arrow = '<span class="caret"></span>';
-            var a = $(this).parent().parent().prevAll('a');
-            var str = $(this).text();
-            a.text(str);
-            a.append(arrow);
-        $('input[name=position]').val(str);
+                },
+                error: function () {
+                    alert('未知错误！')
+                }
+            }
+        );
+    }
 
-        })
-    })}
     /* 函数：设置登陆密码框是否显示 */
     function change_password_condition() {
         if ($('input#login_permission').is(':checked')) {
@@ -45,67 +57,80 @@
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
                 var dp_json = JSON.parse(xmlhttp.responseText);
-                for (var key in dp_json){
-                    var d_str = '<li><a href="#">'+ key +'</a></li>';
+                /* 渲染departments */
+                for (var i in dp_json){
+                    var dp = dp_json[i];
+                    var d_str = '<li><a id="'+ dp['id'] +'" href="javascript:void(0)">'+ dp['name'] +'</a></li>';
                     $('.d_menu').append(d_str);
-
-
                 }
-                /* 渲染position下拉菜单 */
-                var p_menu = $('p_menu');
-                p_menu.empty();
-                var c = "{{ u.department.name }}";
+                    /* 设置department菜单单击事件 */
+                    $('.d_menu li a').click(function () {
+                        var a = $(this).parent().parent().parent().children('a');
+                        var d_id = $(this).attr('id');
+                        a.attr('id', d_id);
+                        a.empty();
+                        a.append($(this).text()+'<span class="caret"></span>');
+                        /* 渲染修改后的positions */
+                        var ul = $('ul.p_menu');
+                        ul.empty();
+                        for (var i in dp_json){
+                            if (dp_json[i]['id']==parseInt(d_id)){
+                             var ps = dp_json[i]['position'];
+                             for (var x in ps){
+                                 var p_str = '<li><a id="'+ ps[x]['id'] +'" href="javascript:void(0)">'+ ps[x]['name'] +'</a></li>';
+                                 ul.parent().children('a').attr('id',ps[x]['id']);
+                                 ul.append(p_str);
+                             }
+                             }
+                            }
+                        /* 设置新positions菜单的事件 */
+                        var p_as = $('.p_menu li a');
+                        p_as.each(function () {
+                            $(this).click(function () {
+                            var a = $(this).parent().parent().parent().children('a');
+                            a.attr('id',$(this).attr('id'));
+                            a.text($(this).text());
+                            a.append('<span class="caret"></span>');
+                            });
 
-                for(var i=0;i<dp_json[c].length;i++){
-                var p_str = dp_json[c][i];
-                p_str = '<li><a href="#">'+ p_str +'</a></li>';
-                $('.p_menu').append(p_str)
+                        });
+
+                        });
+                    $('.d_menu li a[id={{ u.department.id }}]').click();
+                    $('.d_menu li a[id={{ u.position.id }}]').click();
+
+
+
+
 
             }
-            set_p_menu();
-                /* 设置登陆密码框是否显示 */
+        };
+        xmlhttp.open("GET","/batch_staff/getdepartandposition",true);
+        xmlhttp.send();
+
+                        /* 设置登陆密码框是否显示 */
                 change_password_condition();
 
                 /* 设置允许登陆复选框事件 */
                 $('input#login_permission').click(function(){
                     change_password_condition()
                 });
+    /* 设置保存按钮 */
+    $('button#save_info').click(function () {
+        /* 获取和验证表单 */
+        var id = {{ u.id }};
+        var n = $('input#name').val();
+        var d = $('a.department').attr('id');
+        var p = $('a.position').attr('id');
+        var b = $('input#birth').val();
+        var a = $('input#address').val();
+        var ph = $('input#phone').val();
+        var l = $('input#login_permission').val();
+        var password = $('input#password').val();
+        /* 提交表单 */
+        save_info(id,n,d,p,b,a,ph,l,password);
 
-                /* 设置保存按钮事件 */
-                /*
-                $('button#save_info').click(function(){
-                    .ajax(
-                        {
-                            type:'post',
-                            url: ''
-                        }
-                    )
-                });*/
-                /* 开始设置事件 */
-                var depart_li = $('ul.d_menu li a');
-                depart_li.each(function(){
-                    $(this).click(function(){
-                        var key = $(this).text();
-                        var arrow = '<span class="caret"></span>';
-                        var a = $(this).parent().parent().prevAll('a')
-                        a.text(key);
-                        a.append(arrow);
-                        $('input[name=department]').val(key);
-                        /* 清空和添加 p_menu */
-                        $('.p_menu').empty();
-                        for(var i=0;i<dp_json[key].length;i++){
-                            var p_str = dp_json[key][i];
-                            p_str = '<li><a href="#">'+ p_str +'</a></li>';
-                            $('.p_menu').append(p_str)
-                        }
-                        set_p_menu();
-                    })
-                })
-
-            }
-        };
-        xmlhttp.open("GET","/batch_staff/getdepartandposition",true);
-        xmlhttp.send();
+    });
 
     })
     </script>
@@ -135,7 +160,7 @@
     <div class="input-group col-md-4" id="div-edit">
   <span class="input-group-addon" id="basic-addon1">部门</span>
         <input type="text" name="department" maxlength="16" hidden value="{{ u.department.name }}">
-     <a href="#" class="dropdown-toggle department" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ u.department.name }}<span class="caret"></span></a>
+     <a href="#" class="dropdown-toggle department" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" id="{{ u.department.id }}">{{ u.department.name }}<span class="caret"></span></a>
           <ul class="dropdown-menu d_menu">
 
           </ul>
@@ -143,7 +168,7 @@
     <div class="input-group col-md-4" id="div-edit">
   <span class="input-group-addon" id="basic-addon1">职位</span>
                 <input type="text" name="position" maxlength="16" hidden value="{{ u.position.name }}">
-       <a href="#" class="dropdown-toggle position" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ u.position.name }}<span class="caret"></span></a>
+       <a href="#" class="dropdown-toggle position" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" id="{{ u.position.id }}">{{ u.position.name }}<span class="caret"></span></a>
           <ul class="dropdown-menu p_menu">
 
           </ul>
@@ -169,7 +194,7 @@
   <input name="password" type="text" class="form-control" id="password"  aria-describedby="basic-addon1" maxlength="16">
     </div>
     <hr>
-<button class="btn btn-primary" id="save_info" type="submit">保存信息</button>
+<button class="btn btn-primary" id="save_info" type="button">保存信息</button>
 </div></form>
 </div>
 </div>

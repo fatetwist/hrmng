@@ -210,6 +210,7 @@
                 <h3>员工列表</h3>
             </div>
         <div class="panel-body">
+
  <table class="table" id="dp_staff_list">
      <tr>
         <th>工号</th>
@@ -224,13 +225,14 @@
         <td>{{ u.old }}</td>
         <td>{{ u.phone }}</td>
 
-        {% if current_user.verify_permission_o(permit_o.EVALUATE) %}
+        {% if current_user.can(u=permit_u.EVALUATE) %}
             <td>
             <button class="btn btn-default">综合评价</button>
             </td>
 
         {% endif %}
-        {% if current_user.verify_permission_o(permit_o.ADD_AND_REMOVE) %}
+
+        {% if current_user.can(u=permit_u.ADD_AND_REMOVE) %}
             <td>
             <button class="btn btn-default btn-edit" id="{{ u.id }}">编辑</button>
             <button class="btn btn-danger delete_staff" id="{{ u.id }}">删除成员</button>

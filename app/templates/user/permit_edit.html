@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block head %}
+    <script>
+    $(document).ready(function () {
+        /* 设置保存按钮 */
+        $('button#save-permit').click(function () {
+            /* 采集部门权限信息 */
+            var permits_d ={};
+            var checks = $('div#department label input');
+            checks.each(function (i,c) {
+                permits_d[$(c).attr('id')] = String($(c).is(':checked'));
+            });
+            /* 采集职位权限信息*/
+            var permits_p = {};
+            var checks = $('div#position label input');
+            checks.each(function (i,c) {
+                permits_p[$(c).attr('id')] = String($(c).is(':checked'));
+            });
+            /* 采集操作权限信息 */
+            var checks = $('div#operation label input');
+            var permit_u = 0;
+            checks.each(function (i,c) {
+                if ($(c).is(':checked')) {
+                    permit_u += parseInt($(c).attr('id'))
+                }
+            })
+            /* 开始提交数据 */
+            $.ajax({
+                    url: "{{ url_for('user.permit_edit_post') }}",
+                    type: 'post',
+                    async: false,
+                    data: {d:JSON.stringify(permits_d), p: JSON.stringify(permits_p), u:permit_u, id:{{ permit.id}}},
+                    success:function(data){var data_json=JSON.parse(data);if(data_json['status']==1){alert(data_json['message']);}else{alert(data_json['message'])}},
+                    error: function(){alert('处理失败！')}
+
+                }
+            )
+        })
+    })
+    </script>
+    <style>
+    h1.heading{
+        text-align: center;
+    }
+    button#save-permit{
+        width: 30%;
+        margin-bottom: 15px;
+        padding: 15px;
+        font-size: 20px;
+    }
+    </style>
+{% endblock %}
+
+
+{% block body %}
+    <div class="container" style="background:white;">
+    <h1 class="heading">选择管理范围</h1>
+    <div class="panel panel-default">
+    <div class="panel-heading">部门管理范围</div>
+        <div class="panel-body" id="department">
+            {% for d in ds %}
+                <label><input type="checkbox" id="{{ d.id }}" {% if permit.can(d.permit) %}checked{% endif %}>{{ d.name }}</label>
+            {% endfor %}
+        </div>
+    <div class="panel-heading">职位管理范围</div>
+        <div class="panel-body" id="position">
+            {% for p in ps %}
+                <label><input type="checkbox" id="{{ p.id }}" {% if permit.can(p=p.permit) %}checked{% endif %}>{{ p.name }}</label>
+            {% endfor %}
+        </div>
+        <div class="panel-heading">操作管理权</div>
+        <div class="panel-body" id="operation">
+                <label><input type="checkbox" id="{{ permit_u.EVALUATE }}" {% if permit.can(u=permit_u.EVALUATE) %}checked{% endif %}>综合评价</label>
+                <label><input type="checkbox" id="{{ permit_u.ADD_AND_REMOVE }}" {% if permit.can(u=permit_u.ADD_AND_REMOVE) %}checked{% endif %}>添加和删除</label>
+                <label><input type="checkbox" id="{{ permit_u.EDIT}}" {% if permit.can(u=permit_u.EDIT) %}checked{% endif %}>编辑</label>
+        </div>
+        <hr>
+    <div style="text-align: center">
+        <button class="btn2-default" id="save-permit">保存权限</button>
+    </div>
+    </div>
+{% endblock %}

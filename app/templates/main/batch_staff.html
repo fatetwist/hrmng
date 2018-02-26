@@ -106,7 +106,6 @@
                 $('button#add-to-sql').click(function () {
                     /* 验证是否有内容 */
                     var trs = $('tr#user-to-add');
-                    alert(trs.length);
                     if(trs.length<1){
                         alert('没有可提交的内容！');
                         return false
@@ -125,8 +124,25 @@
                     var list_u = {};
 
                     children.each(function (i,u) {
-                        var content = $(u).text();
-                        list_u[dict[i]] = content;
+                        if(i==0){
+                            list_u['n'] = $(u).text();
+                        }
+                        if(i==1){
+                            list_u['d'] = $(u).attr('class')
+                        }
+                        if(i==2){
+                            list_u['p'] = $(u).attr('class')
+                        }
+                        if(i==3){
+                            list_u['a'] = $(u).text()
+                        }
+                        if(i==4){
+                            list_u['ph'] = $(u).text()
+                        }
+                        if(i==4){
+                            list_u['b'] = $(u).text()
+                        }
+
 
                     });
                 list.push(list_u)
@@ -155,16 +171,16 @@
             $('button#add').click(function(){
                 /* 检查提交信息 */
 
-                var name = $('input#name').val();
-                var department = $('a.department').text();
-                var position = $('a.position').text();
-                var address = $('input#address').val();
-                var phone = $('input#phone').val();
-                var birth = $('input#birth').val();
+                var n = $('input#name');var name=n.val();
+                var d = $('a.department');var d_id = d.attr('id');var department = d.text();
+                var p = $('a.position');var p_id = p.attr('id');var position = p.text();
+                var a = $('input#address');var address = a.val();
+                var ph = $('input#phone');var phone = ph.val();
+                var b = $('input#birth');var birth = b.val();
                 var u_str = '<tr id="user-to-add">' +
                     '<td id="name">' + name + '</td>' +
-                    '<td id="department">' + department + '</td>' +
-                    '<td id="position">' + position + '</td>' +
+                    '<td id="department" class="'+d_id+'">' + department + '</td>' +
+                    '<td id="position" class="'+p_id+'">' + position + '</td>' +
                     '<td id="address">' + address + '</td>' +
                     '<td id="phone">' + phone + '</td>' +
                     '<td id="birth">' + birth + '</td>' +
@@ -175,6 +191,9 @@
                     $('table#table-users-to-add').append(u_str)
 
                 }
+                else{
+                    alert('请填写完整信息！')
+                }
                 /* 设置按钮事件 */
                 $('button#remove-user-to-add').click(
                     function(){
@@ -184,7 +203,7 @@
 
             });
 
-        /* 读取json并渲染html */
+/* 读取json并渲染html */
         var xmlhttp;
         if (window.XMLHttpRequest)
         {
@@ -201,47 +220,55 @@
 
             if (xmlhttp.readyState==4 && xmlhttp.status==200)
             {
-                var dp_json = JSON.parse(xmlhttp.responseText)
-                for (var key in dp_json){
-                    var d_str = '<li><a href="#">'+ key +'</a></li>';
+                var dp_json = JSON.parse(xmlhttp.responseText);
+                /* 渲染departments */
+                for (var i in dp_json){
+                    var dp = dp_json[i];
+                    var d_str = '<li><a id="'+ dp['id'] +'" href="javascript:void(0)">'+ dp['name'] +'</a></li>';
                     $('.d_menu').append(d_str);
-
                 }
-                /* 开始设置事件 */
-                var depart_li = $('ul.d_menu li a');
-                depart_li.each(function(){
-                    $(this).click(function(){
-                        var key = $(this).text();
-                        var arrow = '<span class="caret"></span>';
-                        var a = $(this).parent().parent().prevAll('a')
-                        a.text(key);
-                        a.append(arrow);
+                    /* 设置department菜单单击事件 */
+                    $('.d_menu li a').click(function () {
+                        var a = $(this).parent().parent().parent().children('a');
+                        var d_id = $(this).attr('id');
+                        a.attr('id', d_id);
+                        a.empty();
+                        a.append($(this).text()+'<span class="caret"></span>');
+                        /* 渲染修改后的positions */
+                        var ul = $('ul.p_menu');
+                        ul.empty();
+                        for (var i in dp_json){
+                            if (dp_json[i]['id']==parseInt(d_id)){
+                             var ps = dp_json[i]['position'];
+                             for (var x in ps){
+                                 var p_str = '<li><a id="'+ ps[x]['id'] +'" href="javascript:void(0)">'+ ps[x]['name'] +'</a></li>';
+                                 ul.append(p_str);
+                             }
+                             }
+                            }
+                        /* 设置新positions菜单的事件 */
+                        /* 设置新positions菜单的事件 */
+                        var p_as = $('.p_menu li a');
+                        p_as.each(function () {
+                            $(this).click(function () {
+                            var a = $(this).parent().parent().parent().children('a');
+                            a.attr('id',$(this).attr('id'));
+                            a.text($(this).text());
+                            a.append('<span class="caret"></span>');
+                            });
 
-                        $('.p_menu').empty();
-                        for(var i=0;i<dp_json[key].length;i++){
-                            var p_str = dp_json[key][i];
-                            p_str = '<li><a href="#">'+ p_str +'</a></li>';
-                            $('.p_menu').append(p_str)
-                        }
-                        /* 设定新菜单的事件 */
-                        $('ul.p_menu li a').each(function(){
+                        });
 
-                            $(this).click(function(){
-                                var arrow = '<span class="caret"></span>';
-                                var a = $(this).parent().parent().prevAll('a')
-                                a.text($(this).text());
-                                a.append(arrow)
+                        });
 
-                            })
-                        })
-                    })
-                })
+
+
+
 
             }
         };
         xmlhttp.open("GET","/batch_staff/getdepartandposition",true);
         xmlhttp.send();
-
 
         })
 

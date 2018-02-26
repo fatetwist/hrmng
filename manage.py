@@ -5,7 +5,7 @@ from app.models import Permission, User, Position, Department, calculate_age
 from flask_migrate import MigrateCommand, Migrate
 
 
-app = create_app('default')
+app = create_app('test')
 manager = Manager(app)
 migrate = Migrate(app, db)
 
@@ -20,6 +20,3 @@ manager.add_command('shell', Shell(make_context=make_shell_context))
 
 if __name__ == '__main__':
     manager.run()
-
-
-

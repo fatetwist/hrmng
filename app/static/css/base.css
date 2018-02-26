@@ -3,3 +3,18 @@ a.navbar-brand{
     font-weight: bold;
 }
 
+div button.btn2-default{
+
+
+    background: #3385ff;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: 2px solid #2d78f4;
+    color: white;
+}
+div button.btn2-default:hover{
+    background: #317ef3;
+    border-bottom: 2px solid #2868c8;
+    box-shadow: 1px 1px 1px #ccc;
+}

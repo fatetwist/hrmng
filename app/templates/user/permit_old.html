@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block head %}
+    <script>
+    $(document).ready(function () {
+        /* 设置编辑按钮 */
+        $('button#edit-permit').click(function () {
+            var id = $(this).parent().parent().attr('id');
+            window.open("{{ url_for('user.permit_edit') }}"+"?id=" + id)
+
+        })
+    })
+    </script>
+    <style>
+    h1.heading{
+        text-align: center;
+    }
+    </style>
+{% endblock %}
+{% block body %}
+    <div class="container" style="background:white">
+
+    <h1 class="heading">管理已有权限</h1>
+
+<div class="panel panel-default">
+<div class="panel-body">
+    <table class="table">
+    <tr>
+    <th>权限名</th>
+    <th>部门权限</th>
+    <th>职位权限</th>
+    <th>操作权限</th>
+    <th>操作</th>
+    </tr>
+        {% for p in ps %}
+    <tr id="{{ p.id }}">
+        <td>{{ p.name }}</td>
+        <td>{{ p.permit_d }}</td>
+        <td>{{ p.permit_p }}</td>
+        <td>{{ p.permit_u }}</td>
+
+    <td><button class="btn2-default" id="edit-permit">编辑权限</button></td>
+
+    </tr>
+        {% endfor %}
+    </table>
+</div>
+</div>
+</div>
+    </div>
+{% endblock %}

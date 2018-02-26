@@ -29,57 +29,67 @@ def get_birth_date(birth):
     return birth_date
 
 
-
-class permission_p:
-    # 部门
-    IT = 0x20000  # IT部
-    DIRECTOR = 0x10000  # 董事会
-    MANAGER = 0x8000  # 总经办
-    ADMIN = 0x4000  # 行政部
-    FINANCE = 0x2000  # 财务部
-    PRODUCT = 0x1000  # 生产部
-    SALE = 0x800  # 销售部
-    HR = 0x400  # 人力资源部
-    PURCHASE = 0x200  # 采购部
-    LOGISTICS = 0x100  # 后勤部
-    # 职位 : 主管、经理、副经理、组长、员工
-    D_MANAGER = 0x80  # 经理和主管
-    D_MANAGER_F = 0x40  # 副经理
-    D_GROUP_LEADER = 0x20  # 组长
-    D_EMPLOYEE = 0x10  # 员工
-    D_DIRECTOR = 0x08
-    #########################
+# 定义用户具体权限
+class permit_u:  # 具体权限
+    EVALUATE = 2  # 评价
+    ADD_AND_REMOVE = 1  # 增加和删除
+    EDIT = 4  # 编辑用户
 
 
-permit_abbr = {
-	'it':permission_p.IT, # it部
-	'director':permission_p.DIRECTOR, # 董事会
-	'manager':permission_p.MANAGER, # 总经办
-	'admin':permission_p.ADMIN, # 行政部
-	'sale':permission_p.SALE,
-	'purchase':permission_p.PURCHASE,
-	'product':permission_p.PRODUCT,
-	'logistics':permission_p.LOGISTICS,
-	'hr':permission_p.HR,
-	'finance':permission_p.FINANCE,
-    'd_manager':permission_p.FINANCE,
-    'd_manager_f': permission_p.D_MANAGER_F,
-    'd_group_leader': permission_p.D_GROUP_LEADER,
-    'd_employee': permission_p.D_EMPLOYEE,
-    'd_director': permission_p.D_DIRECTOR
+# 定义默认数据
+default_position = {
+    'director': ['董事长'],
+    'manager': ['经理', '员工'],
+    'admin': ['经理', '员工'],
+    'finance': ['经理', '员工'],
+    'product': ['经理', '员工'],
+    'sale': ['经理', '员工'],
+    'hr': ['经理', '员工'],
+    'purchase': ['经理', '员工'],
+    'logistics': ['经理', '员工'],
+    'it': ['经理', '员工']
 }
 
 
-class permission_o:  # 具体权限
-    EVALUATE = 0x40  # 评价
-    ADD_AND_REMOVE = 0x80  # 增加和删除
+default_permission = {
+    '董事会管理权':(1,3,7),
+    '总经办管理权':(2,3,7),
+    '行政部管理权': (4, 3, 7),
+    '生产部管理权': (16,3,7),
+    '财务部管理权': (8,3,7),
+    '销售部管理权': (32,3,7),
+    '人力资源部管理权': (64,3,7),
+    '采购部管理权': (128,3,7),
+    '后勤部管理权': (256,3,7),
+    'it部管理权': (512,3,7),
+    '系统管理员': (0xFFFF, 0xFFFF, 0xFFFF)
+}
+
+
+
+default_apartment = {
+    'director': ['董事会', 1],
+    'admin': ['行政部',4],
+    'manager': ['总经办',2],
+    'product': ['生产部',16],
+    'finance': ['财务部',8],
+    'sale': ['销售部',32],
+    'hr': ['人力资源部',64],
+    'purchase': ['采购部',128],
+    'logistics': ['后勤部', 256],
+    'it':['it部', 512]
+}
+
 
 # 用户回调函数
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+
+u_permits = db.Table('u_permits',
+                     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
+                     db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id')))
 
 
 class User(UserMixin, db.Model):
@@ -97,8 +107,23 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(11),nullable=False)
     login_permission = db.Column(db.Boolean, default=True)
     old = db.Column(db.Integer)
-    permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'))
     password_hash = db.Column(db.String(128))
+    permissions = db.relationship('Permission', secondary=u_permits, backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
+
+    def can(self, d=None, p=None, u=None):   # 输入3种权限值
+        for x in self.permissions:
+            if d and not (x.permit_d & d) == d:
+                continue
+            if p and not (x.permit_p & p) == p:
+                continue
+            if u and not (x.permit_u & u) == u:
+                continue
+            return True
+        return False
+
+
+
+
 
 
 
@@ -117,20 +142,7 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    @staticmethod
-    def generate_test_users():
-        for x in test_users:
-            depart = Department.query.filter_by(name=x['department']).first()
-            position = None
-            # 开始寻找position
-            for y in depart.positions:
-                if y.name == x['position']:
-                    position = y
-            if not position:
-                position = depart.positions[0]  # 默认取第一个
-            u = User(name=x['name'], position=position, department=depart, phone=x['phone'], old=x['old'])
-            db.session.add(u)
-            db.session.commit()
+
 
     @staticmethod
     def re_old():
@@ -140,37 +152,22 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
 
-    def verify_permission_by_user(self,u):
-        dp = permit_abbr[u.department.abbr]|permit_abbr[u.position.abbr]
-        if not self.verify_permission_p(dp):
-            return False
-
-        if not self.verify_permission_o(permission_o.ADD_AND_REMOVE|permission_o.EVALUATE):
-            return False
-        else:
-            return True
-
-    def verify_permission_p(self, p):
-        return self.permission is not None and (self.permission.permission_p & p) == p
-
-    def verify_permission_o(self, p):
-        return self.permission is not None and (self.permission.permission_o & p) == p
-
-
 class Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True, unique=True)
     abbr = db.Column(db.String(64))
     name = db.Column(db.String(64),unique=True)
     users = db.relationship('User', backref='department', lazy='dynamic')
-    positions = db.relationship('Position', backref='department',lazy='dynamic')
+    positions = db.relationship('Position', backref='department', lazy='dynamic')
+    permit = db.Column(db.Integer, nullable=False)
 
     @staticmethod
-    def generate_default_department():
-        for x in default_position:
-            department = Department(name=x,abbr=department_abbr[x])
-            db.session.add(department)
-            db.session.commit()
+    def generate_departments():
+        for x in default_apartment:
+            t = default_apartment[x]
+            d = Department(abbr=x,name=t[0], permit=t[1])
+            db.session.add(d)
+        db.session.commit()
 
 
 class Position(db.Model):
@@ -179,100 +176,58 @@ class Position(db.Model):
     # db.Column(db.String(64))
     name = db.Column(db.String(64))
     abbr = db.Column(db.String(64))
+    permit = db.Column(db.Integer, nullable=False)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     users = db.relationship('User', backref='position', lazy='dynamic')
 
     @staticmethod
-    def generate_default_position():
+    def generate_positions():
         for x in default_position:
-            depart = Department.query.filter_by(name=x).first()
-            if depart:
-                for y in default_position[x]:
-                    position = Position(name=y, department=depart,abbr=position_abbr[y])
-                    db.session.add(position)
-                    db.session.commit()
-            else:
-                print('【错误】%s职位无法添加，不能找到部门信息。' % x)
+            t = default_position[x]
+            d = Department.query.filter_by(abbr=x).first()
+            if not d:
+                print('【错误】没有找到部门%s，无法产生默认职位！' % x)
+                continue
+            for y in t:
+                if y == '董事长':
+                    d_abbr = 'd_director'
+                    permit = 4
+                elif y == '经理':
+                    d_abbr = 'd_manager'
+                    permit = 1
+                else:
+                    d_abbr = 'd_staff'
+                    permit = 2
+                p = Position(permit=permit, name=y, abbr=d_abbr, department=d)
+                db.session.add(p)
+        db.session.commit()
 
 
 class Permission(db.Model):
     __tablename__ = 'permissions'
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(64), unique=True)
-    permission_p = db.Column(db.Integer)
-    permission_o = db.Column(db.Integer)
-    users = db.relationship('User', backref='permission', lazy='dynamic')
+    permit_d = db.Column(db.Integer, nullable=False)
+    permit_p = db.Column(db.Integer, nullable=False)
+    permit_u = db.Column(db.Integer, nullable=False)
+
+    def can(self, d=None, p=None, u=None):
+        if d and not (self.permit_d & d) == d:
+            return False
+        if p and not (self.permit_p & p) == p:
+            return False
+        if u and not (self.permit_u & u) == u:
+            return False
+        return True
+
 
     @staticmethod
     def generate_default_permission():
         for x in default_permission:
             p = default_permission[x]
-            permission = Permission(name=x, permission_p=p[0], permission_o=p[1])
+            permission = Permission(name=x, permit_d=p[0], permit_p=p[1], permit_u=p[2])
             db.session.add(permission)
-            db.session.commit()
-
-
-department_abbr = {
-    '董事会': 'director',
-    '总经办': 'manager',
-    '行政部': 'admin',
-    '财务部': 'finance',
-    '生产部': 'product',
-    '销售部': 'sale',
-    '人力资源部': 'hr',
-    '采购部': 'purchase',
-    '后勤部': 'logistics',
-    'IT部': 'it'
-}
-
-position_abbr ={
-    '经理': 'd_manager',
-    '主管': 'd_manager',
-    '副经理': 'd_manager_f',
-    '员工': 'd_employee',
-    '董事长': 'd_director'
-}
-
-default_position = {
-    '董事会': ['董事长'],
-    '总经办': ['经理', '员工'],
-    '行政部': ['经理', '员工'],
-    '财务部': ['经理', '员工'],
-    '生产部': ['经理', '员工'],
-    '销售部': ['经理', '员工'],
-    '人力资源部': ['经理', '员工'],
-    '采购部': ['经理', '员工'],
-    '后勤部': ['经理', '员工'],
-    'IT部': ['经理', '员工']
-}
-
-
-default_permission = {
-
-    '管理员': [0x1FFF, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '总经理部门管理': [0x8070, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '行政部门管理': [0x407F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '财务部门管理': [0x207F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '生产部门管理': [0x107F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '销售部门管理': [0x87F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '人力资源部门管理': [0x47F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '采购部门管理': [0x27F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    '后勤部门管理': [0x17F, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE],
-    'IT部门管理': [0x2000, permission_o.EVALUATE|permission_o.ADD_AND_REMOVE]
-}
-
-
-test_users = [
-    {'name': '张三', 'department': '董事会', 'phone': '010123456', 'old': 18, 'position': '董事长'},
-    {'name': '李四', 'department': 'IT部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张一', 'department': '人力资源部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张二', 'department': '采购部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张四', 'department': '销售部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张五', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张六', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张七', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'},
-    {'name': '张八', 'department': '生产部', 'phone': '010123456', 'old': 18, 'position': '经理'}
-]
+        db.session.commit()
 
 
 

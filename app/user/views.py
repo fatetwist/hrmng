@@ -1,8 +1,20 @@
 from . import user
 from flask import render_template, request, flash, redirect, url_for, abort
-from ..models import User, Department, Position, get_birth_date, db, permit_abbr
+from ..models import User, Department, Position, get_birth_date, db, permit_u, Permission
 from flask_login import login_user, current_user, logout_user, login_required
 import json
+
+def verify_password_2(u_id, password):
+    u = User.query.get(u_id)
+    if not u:
+        res = {'status': 0, 'message': '无法找到用户！'}
+        return json.dumps(res)
+    if u.verify_password(password):
+        res = {'status': 1, 'message': '验证通过！'}
+    else:
+        res = {'status': 0, 'message': '密码错误！'}
+
+    return res
 
 
 @user.route('/', methods=['POST', 'GET'])
@@ -53,43 +65,38 @@ def logout():
 @login_required
 def edit_staff():
     if request.method == 'POST':
-        id = request.args.get('id', None, type=int)
-        if not id:
-            flash('您输入的信息有误！')
-            return redirect(url_for('user.edit_staff', id=id))
-        name = request.form.get('name')
-        department = request.form.get('department')
-        position = request.form.get('position')
-        birth = request.form.get('birth')
-        address = request.form.get('address')
-        phone = request.form.get('phone')
-        login_permission = request.form.get('login_permission')
+        id = request.form.get('id', None, type=int)
+        name = request.form.get('n')
+        department = request.form.get('d', None, type=int)
+        position = request.form.get('p', None, type=int)
+        birth = request.form.get('b')
+        address = request.form.get('a')
+        phone = request.form.get('ph')
+        login_permission = request.form.get('l')
         password = request.form.get('password')
         # 开始处理表单信息
         user = User.query.get(id)
-        department = Department.query.filter_by(name=department).first()
-        position = Position.query.filter_by(name=position).first()
+        department = Department.query.get(department)
+        position = Position.query.get(position)
         if not user or not position:
-            flash('您输入的信息有误！')
-            return redirect(url_for('user.edit_staff', id=id))
+            res = {'status': 0, 'message': '找不到用户对象！'}
+            return json.dumps(res)
         try:
             birth = get_birth_date(birth)
         except:
             flash('您输入的信息有误！')
-            return redirect(url_for('user.edit_staff',id=id))
+            return redirect(url_for('user.edit_staff', id=id))
         if login_permission == 'on':
             login_permission = True
         else:
             login_permission = False
         # 检查权限（读）
-        if not current_user.verify_permission_by_user(user):
-            flash('您的权限不足！')
-            return redirect(url_for('user.edit_staff', id=id))
         # 检查权限（写）
-        if not current_user.verify_permission_p(permit_abbr[department.abbr]|permit_abbr[position.abbr]):
-            flash('您的权限不足！')
-            return redirect(url_for('user.edit_staff', id=id))
+        if not current_user.can(department.permit, position.permit, permit_u.ADD_AND_REMOVE):
+            res = {'status': 0, 'message': '权限不足，无法修改！'}
+            return json.dumps(res)
         # 开始修改信息
+
         user.name = name
         user.department = department
         user.position = position
@@ -97,10 +104,11 @@ def edit_staff():
         user.phone = phone
         user.address = address
         user.login_permission = login_permission
-        user.password = password
+        if password:
+            user.password = password
         db.session.commit()
-        flash('工号%s信息修改成功！' % user.id)
-        return redirect(url_for('user.edit_staff', id=id))
+        res = {'status': 1, 'message': '工号%s信息修改成功' % user.id}
+        return json.dumps(res)
     else:
         id = request.args.get('id', None, type=int)
         u = User.query.get(id)
@@ -108,7 +116,7 @@ def edit_staff():
             abort(404)
 
         # 检查权限
-        if not current_user.verify_permission_by_user(u):
+        if not current_user.can(u.department.permit,u.position.permit,permit_u.ADD_AND_REMOVE):
             flash('您的权限不足！')
             return redirect(url_for('main.index'))
         return render_template('/user/edit_staff.html', u=u)
@@ -136,6 +144,7 @@ def change_password():
         res = {'status': 1, 'message': '密码修改成功！'}
         return json.dumps(res)
 
+
 @user.route('/verify_pssword',methods=['POST'])
 def verify_password():
     u_id = request.form.get('id',type=int)
@@ -144,15 +153,80 @@ def verify_password():
     return json.dumps(res)
 
 
+@user.route('/permit')
+def permit():
+    return render_template('/user/permit.html')
 
-def verify_password_2(u_id, password):
-    u = User.query.get(u_id)
-    if not u:
-        res = {'status': 0, 'message': '无法找到用户！'}
+
+@user.route('/permit/new')
+def permit_new():
+    return render_template('/user/permit_new.html')
+
+
+@user.route('/permit/old')
+def permit_old():
+    permissions = Permission.query.all()
+
+    return render_template('/user/permit_old.html', ps=permissions)
+
+
+@user.route('/permit/edit_post', methods=['post'])
+def permit_edit_post():
+    p_id = request.form.get('id', type=int)
+    d = json.loads(request.form.get('d'))
+    p = json.loads(request.form.get('p'))
+    u = request.form.get('u', type=int)
+    # 寻找权限
+    permission = Permission.query.get(p_id)
+    if not permission:
+        res = {'status': 0, 'message': '无法找到该权限组！'}
         return json.dumps(res)
-    if u.verify_password(password):
-        res = {'status': 1, 'message': '验证通过！'}
-    else:
-        res = {'status': 0, 'message': '密码错误！'}
+    permit_d = 0
+    permit_p = 0
+    permit_u = u
+    for k in d:
+        if d[k] == 'true':
+            department = Department.query.get(int(k))
+            if not department:
+                res = {'status': 0, 'message': '提交信息有误！无法找到部门权限！'}
+                return json.dumps(res)
+            permit_d = permit_d|department.permit
 
-    return res
+
+
+
+    for k in p:
+        if p[k]=='true':
+            position = Position.query.get(int(k))
+            if not position:
+                res = {'status': 0, 'message': '提交信息有误！无法找到职位权限！'}
+                return json.dumps(res)
+            permit_p = permit_p|position.permit
+
+    permission.permit_p = permit_p
+    permission.permit_d = permit_d
+    permission.permit_u = permit_u
+    db.session.commit()
+    res = {'status': 1, 'message': '权限修改成功！'}
+    return json.dumps(res)
+
+
+@user.route('/permit/edit', methods=['post', 'get'])
+def permit_edit():
+
+    id = request.args.get('id', None,type=int)
+    if not id:
+        abort(404)
+    permission = Permission.query.get(id)
+    ds = Department.query.all()
+    ps = Position.query.all()
+    # 剔除重复
+    t = set()
+    ps_2 = []
+
+    for p in ps:
+        if not p.name in t:
+            ps_2.append(p)
+        t.add(p.name)
+    return render_template('/user/permit_edit.html', permit=permission, permit_u=permit_u, ds=ds, ps=ps_2)
+
