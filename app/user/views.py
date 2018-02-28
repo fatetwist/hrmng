@@ -210,6 +210,7 @@ def permit_new():
 
 
 @user.route('/permit/new_post', methods=['post'])
+@admin_required
 def permit_new_post():
     name = request.form.get('name')
     d = json.loads(request.form.get('d'))
