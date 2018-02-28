@@ -5,3 +5,4 @@ flask-script
 xlrd
 xlwt
 request
+flask-login

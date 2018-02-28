@@ -2,6 +2,7 @@ from . import main
 from flask import redirect, url_for, render_template, request, flash, abort
 from flask_login import login_required, current_user
 from ..models import Department, User,  permit_u,  Position, get_birth_date
+from ..decorators import admin_required
 import json
 from datetime import date
 from .. import db
@@ -11,10 +12,14 @@ import hashlib
 import base64
 import random
 import shutil
+import platform
+
 
 '''
 sha1 file with filename (SHA1)
 '''
+
+
 def calculate_sha1(f, block_size=64 * 1024):
     sha1 = hashlib.sha1()
     while True:
@@ -95,11 +100,13 @@ def getdp():
 
 
 @main.route('/batch_staff')
+@login_required
 def batch_staff():
     return render_template('main/batch_staff.html')
 
 
 @main.route('/add-to-sql',methods=['POST'])
+@login_required
 def add_to_sql():
     json_list = request.form.get('json_list')
     list = json.loads(json_list)
@@ -139,15 +146,21 @@ def add_to_sql():
 
 
 @main.route('/add-to-sql-by-excel', methods=['POST'])
+@login_required
 def add_to_sql_by_excel():
     file_excel = request.files['file-excel']
+    if platform.system()=='Windows':
+        # windows系统
+        filename = os.path.join(os.getcwd()+'\\app\\static\\temp\\', str(random.random())[2:])  # 如果是linux需要修改
+    else:
+        # 其他系统
+        filename = os.path.join(os.getcwd()+'/app/static/temp', str(random.random())[2:])
 
-    filename = os.path.join(os.getcwd()+'\\app\\static\\temp\\', str(random.random())[2:])  # 如果是linux需要修改
     file_excel.save(filename)
     data = xlrd.open_workbook(filename)
     table = data.sheets()[0]
     nrows = table.nrows
-    ncols = table.ncols
+    # ncols = table.ncols
     success_num = 0
     user_list = []
 
@@ -196,6 +209,7 @@ def add_to_sql_by_excel():
 
     db.session.commit()
     shutil.rmtree(os.path.dirname(filename))
+    os.mkdir(os.path.dirname(filename))
 
     res_json = {
         'status': 1,
@@ -234,3 +248,11 @@ def edit_staff(id):
     # 检查权限
     current_user.verify_permission_by_user(u)
     return render_template('edit_staff.html', user=u)
+
+
+@main.route('/options')
+@admin_required
+def options():
+    return render_template('main/options.html')
+
+

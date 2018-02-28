@@ -4,17 +4,26 @@
     <script>
     /* function save info */
     function save_info (id, n,d, p, b, a, ph,l, pass) {
+        {% if current_user.is_admin() %}
+        /* 处理权限列表 */
+        var permit_ids= [];
+        $('table#permit tr').each(function (i,t) {
+            if (i>0){
+                permit_ids.push($(t).attr('id'))
+            }
+        });
+        {% endif %}
         $.ajax(
             {
                 url:"{{ url_for('user.edit_staff') }}",
-                data:{id:id,n:n, d:d, p:p, b:b, a:a, ph:ph, l:l,password: pass},
+                data:{id:id,n:n, d:d, p:p, b:b, a:a, ph:ph, l:l,password: pass{% if current_user.is_admin() %},permissions:JSON.stringify(permit_ids){% endif %}},
                 type: 'post',
                 async: false,
                 success: function (data) {
                     var data_json = JSON.parse(data);
                   if(data_json['status']==1){
                       alert(data_json['message']);
-                      window.reload();
+                      window.location.reload();
                   }
                   else{
                       alert(data_json['message']);
@@ -125,16 +134,42 @@
         var b = $('input#birth').val();
         var a = $('input#address').val();
         var ph = $('input#phone').val();
-        var l = $('input#login_permission').val();
+        if($('input#login_permission').is(':checked')){
+            var l = '1'
+        }
+        else{
+            var l = '0'
+        }
         var password = $('input#password').val();
         /* 提交表单 */
         save_info(id,n,d,p,b,a,ph,l,password);
 
     });
+    /* 设置添加权限按钮 */
+    function set_operation(){
+        var t = $('table#permit tr');
+        var b =  t.children().children('button');
+        b.click(function () {
+            $(this).parent().parent().remove()
+        })
 
+    }
+    $('button#add-permit').click(function () {
+        var id = $('select option:selected').attr('id');
+        var name = $('select').val();
+        var str = "<tr id='"+ id +"'>" +
+            "<td>"+ id +"</td>"+
+                "<td>"+name + "</td>"+
+                '<td><button class="btn btn-danger" type="button">删除</button></td>'+
+                "</tr>";
+        $('table#permit').append(str);
+        set_operation();
+    });
+
+    set_operation()
     })
     </script>
-        <style>
+    <style>
     div#div-edit{
         margin-top: 15px;
         margin-bottom: 15px;
@@ -142,6 +177,11 @@
     div.panel-default{
         margin-top: 15px;
     }
+        button#add-permit{
+            padding: 3px 12px 3px 12px;
+            margin-bottom: 4px;
+            margin-right: 4px;
+        }
     </style>
 {% endblock %}
 {% block body %}
@@ -185,6 +225,33 @@
   <span class="input-group-addon" id="basic-addon1">联系电话</span>
   <input name="phone" onkeyup="(this.v=function(){this.value=this.value.replace(/[^\d\-]/,'');}).call(this)" onblur="this.v();" type="text" class="form-control" id="phone" placeholder="0791-123456" aria-describedby="basic-addon1" maxlength="11" value="{{ u.phone }}">
     </div>
+    <div class="panel panel-default">
+    <div class="panel-heading">权限列表[仅系统管理员可修改]</div>
+    <table class="table" id="permit">
+        <tr>
+            <th>ID</th>
+            <th>权限名</th>
+            <th>操作</th>
+        </tr>
+        {% for p in u.permissions %}
+            <tr id="{{ p.id }}">
+            <td>{{ p.id }}</td>
+            <td>{{ p.name }}</td>
+            <td><button class="btn btn-danger" type="button">删除</button></td>
+            </tr>
+        {% endfor %}
+    </table>
+        <hr>
+    <div style="text-align: right">
+        <label>添加权限</label>
+        <select class="selectpicker" data-style="btn-info">
+            {% for p in ps %}
+                <option id="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+        </select>
+    <button class="btn btn-default" id="add-permit" type="button">添加</button>
+    </div>
+    </div>
     <hr>
        <div class="input-group" id="div-edit">
             <label><input name="login_permission" id="login_permission" type="checkbox" {% if u.login_permission %}checked{% endif %}>允许登陆</label>
@@ -193,6 +260,7 @@
   <span class="input-group-addon" id="basic-addon1">登陆密码</span>
   <input name="password" type="text" class="form-control" id="password"  aria-describedby="basic-addon1" maxlength="16">
     </div>
+
     <hr>
 <button class="btn btn-primary" id="save_info" type="button">保存信息</button>
 </div></form>

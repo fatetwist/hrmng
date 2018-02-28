@@ -16,10 +16,9 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     login_manager.init_app(app)
     db.init_app(app)
-
     # 注册blueprint
     from .main import main as main_blueprint
-    from .user import user as user_blueprint
     app.register_blueprint(main_blueprint)
+    from .user import user as user_blueprint
     app.register_blueprint(user_blueprint, url_prefix='/user')
     return app

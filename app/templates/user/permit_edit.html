@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% block title %}
+    编辑权限{{ permit.id }}【{{ permit.name }}】
+{% endblock %}
 {% block head %}
     <script>
     $(document).ready(function () {
@@ -23,7 +26,7 @@
                 if ($(c).is(':checked')) {
                     permit_u += parseInt($(c).attr('id'))
                 }
-            })
+            });
             /* 开始提交数据 */
             $.ajax({
                     url: "{{ url_for('user.permit_edit_post') }}",
@@ -77,6 +80,7 @@
         <hr>
     <div style="text-align: center">
         <button class="btn2-default" id="save-permit">保存权限</button>
+    </div>
     </div>
     </div>
 {% endblock %}

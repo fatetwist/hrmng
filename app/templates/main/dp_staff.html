@@ -127,26 +127,9 @@
                 /* 设置删除按钮 */
             $('button.delete_staff').click(function(){
                 var id = $(this).attr('id');
-                {#$.ajax(#}
-                {#    {#}
-                {#        url: "{{ url_for('main.remove_staff') }}",#}
-                {#        type: 'POST',#}
-                {#        data: {id: id},#}
-                {#        success: function (data) {#}
-                {#            var data_json = JSON.parse(data);#}
-                {#            if (data_json['status']==1){#}
-                {#                alert(data_json['message'])#}
-                {#            }#}
-                {#            else{#}
-                {#                alert(data_json['message'])#}
-                {#            }#}
-                {#        },#}
-                {#        error: function(){alert('提交信息有误！')},#}
-                {#        async: false,#}
-                {#        dataType: "json"#}
-                {##}
-                {##}
-                {#    }#}
+                if (!(confirm('确定要删除工号为'+id+'的成员吗？'))){
+                    return;
+                }
                 id = parseInt(id);
                 $.post(
                     "{{ url_for('main.remove_staff') }}",
@@ -173,41 +156,72 @@
             var url = "{{ url_for('user.edit_staff') }}"+"?id="+id;
             window.open(url)
 
-        })
+        });
+
+        /* 设置评价按钮 */
+            $('button#evaluate').click(function(){
+                window.open("{{ url_for('user.evaluate') }}"+"?id="+$(this).parent().parent().attr('id'));
+            })
 
 
         })
     </script>
+    <style>
+    button#filter_name,#filter_id{
+        margin: 1px;
+        padding:3px 12px 3px 12px;
+    }
+    input#filter_id{
+        padding: 1px 12px 1px 12px;
+    }
+    button#filter_condition{
+        padding:3px 12px 3px 12px;
+
+    }
+    input#filter_old_start{
+        margin-right: 2px;
+    }
+    input#filter_old_over{
+        margin-left: 2px;
+    }
+
+    </style>
 {% endblock %}
 {% block body %}
 
     <div class="container" style="background: white;">
-        <h1>{{ depart.name }}</h1>
+        <h1 style="text-align: center">{{ depart.name }}</h1>
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">筛选</h3>
+            <h3 class="panel-title"><b>筛选</b></h3>
         </div>
   <div class="panel-body">
        <div class="filter">
             <label style="display: block;"><input type="checkbox" id="this_page"> 在本页面筛选</label>
-           <hr>
+
            <div class="filter-exact">
-               <h5>精确查找</h5>
-           <label>姓名：</label><input type="input" id="filter_name" maxlength="8"> <button class="btn btn-default" id="filter_name">查找</button><br>
-               <label>工号：</label><input type="input" id="filter_id" maxlength="8"> <button class="btn btn-default" id="filter_id">查找</button>
-               <hr>
-               <h5>条件筛选</h5>
-               <label>年龄范围：</label><input type="input" id="filter_old_start">至<input type="input" id="filter_old_over">
-               <button class="btn btn-default" id="filter_condition">确定筛选</button>
+
             </div>
         </div>
 </div>
+            <div class="panel-heading"><b>精确查找</b></div>
+            <div class="panel-body">
+           <label>姓名：</label><input type="input" id="filter_name" maxlength="8"> <button class="btn btn-default" id="filter_name">查找</button><br>
+               <label>工号：</label><input type="input" id="filter_id" maxlength="8"> <button class="btn btn-default" id="filter_id">查找</button>
+
+
+                </div>
+            <div class="panel-heading"><b>条件筛选</b></div>
+            <div class="panel-body">
+               <label>年龄范围：</label><input type="input" id="filter_old_start">至<input type="input" id="filter_old_over">
+               <button class="btn btn-default" id="filter_condition">确定筛选</button>
+                </div>
     </div>
     {% if dp_staff %}
     <!-- 列表开始 -->
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3>员工列表</h3>
+                <h3 style="margin: 0;text-align: center">员工列表</h3>
             </div>
         <div class="panel-body">
 
@@ -227,7 +241,7 @@
 
         {% if current_user.can(u=permit_u.EVALUATE) %}
             <td>
-            <button class="btn btn-default">综合评价</button>
+            <button class="btn btn-default" id="evaluate">综合评价</button>
             </td>
 
         {% endif %}

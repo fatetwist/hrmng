@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}
+    综合评价用户{{ u.id }}
+{% endblock %}
+{% block head %}
+    <script>
+    function mode_1(){
+        $('span.evaluate-star').attr('star_change','false');
+        $('textarea#remark').attr('disabled','disabled');
+        $('button#submit').hide();
+    }
+    function mode_2(){
+        putout_star();
+        $('span.evaluate-star label').empty();
+        empty_textarea();
+        $('button#submit').show();
+        $('span.evaluate-star').attr('star_change','true').attr('light','0');
+        $('textarea#remark').removeAttr('disabled');
+
+
+    }
+    function set_label(rank){
+                var p = $('span.evaluate-star label');
+                if (rank==0){
+                    p.empty();
+                }
+               if (rank==1){
+                    p.text('非常差')
+                }
+                if (rank==2){
+                    p.text('差')
+                }
+                if (rank==3){
+                    p.text('一般')
+                }
+                if (rank==4){
+                    p.text('好')
+                }
+                if (rank==5){
+                    p.text('非常好')
+                }
+    }
+    function putout_star(){
+        var imgs = $('span.evaluate-star img');
+         {#全部熄灭 #}
+        imgs.attr('src', "{{ url_for('static', filename='pictures/evaluate/star_no.png') }}");
+    }
+    function empty_textarea(){
+        $('textarea').val('')
+    }
+    function change_star(n){
+        putout_star();
+        var imgs = $('span.evaluate-star img');
+        $('span.evaluate-star').attr('light', n);
+        imgs.each(function(i,v){
+            if (i < n){
+
+                $(this).attr('src', "{{ url_for('static', filename='pictures/evaluate/star_ok.png') }}");
+
+            }
+        });
+        set_label(n);
+    }
+    function flash_evaluate(id){
+        if (id=='-1'){
+
+            mode_2()
+
+
+
+        }
+        else{
+            $.ajax({
+                url:"{{ url_for('user.evaluation') }}",
+                data:{id:id},
+                type:'post',
+                async: false,
+                success: function (data) {
+                    var data_json = JSON.parse(data);
+                    console.log(data_json);
+                    if(data_json['status']=='1'){
+                        change_star(parseInt(data_json['data']['rank']));
+                        var textarea = $('textarea#remark');textarea.val(data_json['data']['remark']);textarea.removeAttr('disabled');
+
+                        mode_1()
+                    }
+                    else{
+                           alert(data_json['message'])
+                    }
+                },
+                error: function () {alert('错误请求！')
+
+                }
+
+            })
+        }
+    }
+        $(document).ready(function () {
+            /* 设置提交评价事件 */
+            $('button#submit').click(function () {
+               /* 采集信息 */
+               var rank = $('span.evaluate-star').attr('light');
+               var remark = $('textarea#remark').val();
+               $.ajax({
+                   url: "{{ url_for('user.evaluate') }}",
+                   type: 'post',
+                   data: {id: {{ u.id }}, rank: rank, remark:remark},
+                   async: false,
+                   success: function (data) {
+                       data = JSON.parse(data);
+                       if (data['status']=='1'){
+                           alert(data['message'])
+                       }
+                       else{
+                           alert(data['message'])
+                       }
+                   },
+                   error:function(){alert('评价失败！')}
+               })
+            });
+            /* 设置切换评价事件 */
+            /* 设置星级评价事件 */
+            $('span.evaluate-star img').mouseover(function () {
+            if(!($('span.evaluate-star').attr('star_change')=='false')) {
+                $(this).attr('src', "{{ url_for('static', filename='pictures/evaluate/star_ok.png') }}");
+                $(this).prevAll().attr('src', "{{ url_for('static', filename='pictures/evaluate/star_ok.png') }}");
+                $(this).nextAll().attr('src', "{{ url_for('static', filename='pictures/evaluate/star_no.png') }}");
+                var rank = $(this).prevAll().length + 1;
+                set_label(rank)
+
+            }
+            });
+            $('span.evaluate-star img').mouseout(function () {
+                if(!($('span.evaluate-star').attr('star_change')=='false')) {
+                    var n = $('span.evaluate-star').attr('light');
+                    change_star(parseInt(n));
+                }
+            });
+            $('span.evaluate-star img').click(function(){if(!($('span.evaluate-star').attr('star_change')=='false')) {var n = $(this).prevAll().length+1;change_star(n)}});
+            /* 日期列表单即事件 */
+            $('div.date-list ul li').click(function(){
+                var id = $(this).attr('id');
+                flash_evaluate(id);
+            }
+            )
+        })
+    </script>
+    <style>
+    div.date-list ul li{
+        list-style: url("{{ url_for('static',filename='pictures/evaluate/arrow.png') }}");
+    }
+    div.date-list ul li:hover{
+        cursor: pointer;
+        text-decoration: underline;
+    }
+    div.date-list{
+        width: 30%;
+        float: left;
+        margin-top: 15px;
+    }
+    div.container{
+        background:white;
+    }
+    div.evaluate{
+        float:left;
+        width: 70%;
+        margin-top: 15px;
+    }
+    div.panel-heading p {margin-bottom: 0;text-align: center}
+    div.panel-heading{padding:0;}
+    div.date-list div.panel-body{
+        padding-top: 0;
+    }
+    div.panel-body.star{
+        height: 60px;}
+    span.evaluate-star img:hover{
+        cursor:pointer;
+
+    }
+    textarea#remark{
+        width: 100%;
+    }
+    div.button{
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    </style>
+
+{% endblock %}
+{% block body %}
+    <div class="container">
+        <div class="panel panel-default date-list">
+            <div class="panel-heading"><p>月份</p></div>
+            <div class="panel-body"></div>
+            <ul>
+                {% for e in es %}
+                    <li class="before_evaluation" id="{{ e.id }}">{{ e.date.strftime('%Y-%m-%d') }}</li>
+                {% endfor %}
+                <li id="-1">{{ m }}</li>
+            </ul>
+        </div>
+    <div class="evaluate panel panel-default">
+        <div class="panel-heading"><p>评价星级</p></div>
+        <div class="panel-body star">
+        <span class="evaluate-star" light="0">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <label></label>
+        </span>
+        </div>
+
+            <div class="panel-heading"><p>备注内容</p></div>
+            <div class="panel-body">
+                <textarea id="remark"></textarea>
+            </div>
+        <hr>
+        <div class="button">
+            <button class="btn2-default" id="submit">提交评价</button>
+
+        </div>
+    </div>
+    </div>
+{% endblock %}

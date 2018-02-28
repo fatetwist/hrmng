@@ -1,10 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}
+    新建权限
+{% endblock %}
+{% block head %}
+    <script>
+    $(document).ready(function () {
+        /* 设置保存按钮 */
+        $('button#save-permit').click(function () {
+            /* 验证表单 */
+                        /* 获得权限名 */
+            var name = $('input#name').val();
+            if(name==''){
+                alert('请输入权限名！');
+                return;
+            }
+            /* 采集部门权限信息 */
+            var permits_d ={};
+            var checks = $('div#department label input');
+            checks.each(function (i,c) {
+                permits_d[$(c).attr('id')] = String($(c).is(':checked'));
+            });
+            /* 采集职位权限信息*/
+            var permits_p = {};
+            var checks = $('div#position label input');
+            checks.each(function (i,c) {
+                permits_p[$(c).attr('id')] = String($(c).is(':checked'));
+            });
+            /* 采集操作权限信息 */
+            var checks = $('div#operation label input');
+            var permit_u = 0;
+            checks.each(function (i,c) {
+                if ($(c).is(':checked')) {
+                    permit_u += parseInt($(c).attr('id'))
+                }
+            });
 
-</body>
-</html>
+            /* 开始提交数据 */
+            $.ajax({
+                    url: "{{ url_for('user.permit_new_post') }}",
+                    type: 'post',
+                    async: false,
+                    data: {name:name ,d:JSON.stringify(permits_d), p: JSON.stringify(permits_p), u:permit_u},
+                    success:function(data){var data_json=JSON.parse(data);if(data_json['status']==1){alert(data_json['message']);}else{alert(data_json['message'])}},
+                    error: function(){alert('处理失败！')}
+
+                }
+            )
+        })
+    })
+    </script>
+    <style>
+    h1.heading{
+        text-align: center;
+    }
+    button#save-permit{
+        width: 30%;
+        margin-bottom: 15px;
+        padding: 15px;
+        font-size: 20px;
+    }
+    </style>
+{% endblock %}
+
+
+{% block body %}
+
+    <div class="container" style="background:white;">
+    <hr>
+    <div class="input-group col-md-4" id="div-edit">
+  <span class="input-group-addon" id="basic-addon1">权限名</span>
+  <input type="text" class="form-control" id="name" name="name" placeholder="请输入权限名" aria-describedby="basic-addon1" maxlength="8">
+</div>
+        <hr>
+    <h1 class="heading">选择管理范围</h1>
+    <div class="panel panel-default">
+    <div class="panel-heading">部门管理范围</div>
+        <div class="panel-body" id="department">
+            {% for d in ds %}
+                <label><input type="checkbox" id="{{ d.id }}">{{ d.name }}</label>
+            {% endfor %}
+        </div>
+    <div class="panel-heading">职位管理范围</div>
+        <div class="panel-body" id="position">
+            {% for p in ps %}
+                <label><input type="checkbox" id="{{ p.id }}">{{ p.name }}</label>
+            {% endfor %}
+        </div>
+        <div class="panel-heading">操作管理权</div>
+        <div class="panel-body" id="operation">
+                <label><input type="checkbox" id="{{ permit_u.EVALUATE }}">综合评价</label>
+                <label><input type="checkbox" id="{{ permit_u.ADD_AND_REMOVE }}">添加和删除</label>
+                <label><input type="checkbox" id="{{ permit_u.EDIT}}">编辑</label>
+        </div>
+        <hr>
+    <div style="text-align: center">
+        <button class="btn2-default" id="save-permit">完成创建</button>
+    </div>
+    </div>
+    </div>
+{% endblock %}

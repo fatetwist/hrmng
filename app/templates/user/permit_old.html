@@ -1,4 +1,7 @@
 {% extends 'base.html' %}
+{% block title %}
+    管理已有权限
+{% endblock %}
 {% block head %}
     <script>
     $(document).ready(function () {
@@ -7,6 +10,35 @@
             var id = $(this).parent().parent().attr('id');
             window.open("{{ url_for('user.permit_edit') }}"+"?id=" + id)
 
+        })
+        /* 设置查看拥有者按钮 */
+        $('button#has_permit').click(function () {
+            var id = $(this).parent().parent().attr('id');
+            window.open("{{ url_for('user.has_permit') }}" + "?permit_id=" + id)
+
+        })
+        /* 设置删除权限 */
+        $('button#delete-permit').click(function () {
+            if(confirm('确定删除权限？将无法恢复，并且所有已经拥有该权限的人将会失去权限！')){
+                var tr = $(this).parent().parent();
+                $.ajax(
+                    {
+                        url: "{{ url_for('user.permit_delete') }}",
+                        type: 'post',
+                        async: false,
+                        data: {p_id: tr.attr('id')},
+                        success: function (data) {
+                            data = JSON.parse(data);
+                            alert(data['message']);
+                            tr.remove()
+                        },
+                        error: function () {
+                            alert('未知错误！')
+                        }
+
+                    }
+                )
+            }
         })
     })
     </script>
@@ -38,7 +70,11 @@
         <td>{{ p.permit_p }}</td>
         <td>{{ p.permit_u }}</td>
 
-    <td><button class="btn2-default" id="edit-permit">编辑权限</button></td>
+    <td>
+        <button class="btn2-default" id="edit-permit">编辑权限</button>
+        <button class="btn2-default" id="has_permit">查看拥有者</button>
+        <button class="btn2-default" id="delete-permit">删除权限</button>
+    </td>
 
     </tr>
         {% endfor %}

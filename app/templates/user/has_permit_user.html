@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}查看拥有权限者{% endblock %}
+{% block body %}
+    <div class="container" style="background: white;">
+        <h1 style="text-align: center">拥有【{{ p.name }}】权限的人</h1>
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <table class="table">
+                    <tr>
+                        <th>工号</th>
+                        <th>姓名</th>
+                        <th>部门</th>
+                    </tr>
+                    {% for u in p.users %}
+                        <tr>
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.name }}</td>
+                        <td>{{ u.department.name }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

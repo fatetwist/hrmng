@@ -1,9 +1,18 @@
 # coding=utf-8
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
-from flask_login import UserMixin
+from flask_login import UserMixin, AnonymousUserMixin,current_user
 from . import login_manager
 from datetime import date
+class AnonymousUser(AnonymousUserMixin):
+    def can(self, *args,**kwargs):
+        return False
+
+    def is_admin(self):
+        return False
+
+
+login_manager.anonymous_user = AnonymousUser
 
 
 def calculate_age(born):
@@ -66,7 +75,6 @@ default_permission = {
 }
 
 
-
 default_apartment = {
     'director': ['董事会', 1],
     'admin': ['行政部',4],
@@ -87,6 +95,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+
 u_permits = db.Table('u_permits',
                      db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
                      db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id')))
@@ -95,20 +104,26 @@ u_permits = db.Table('u_permits',
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
-    def get_age(self):
-        return calculate_age(self.birth)
+
 
     id = db.Column(db.Integer, primary_key=True, unique=True)
-    name = db.Column(db.String(64),nullable=False)
-    position_id = db.Column(db.Integer,db.ForeignKey('positions.id'))
-    department_id = db.Column(db.Integer,db.ForeignKey('departments.id'))
+    name = db.Column(db.String(64), nullable=False)
+    position_id = db.Column(db.Integer, db.ForeignKey('positions.id'))
+    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     address = db.Column(db.Text)
     birth = db.Column(db.Date, nullable=False)
-    phone = db.Column(db.String(11),nullable=False)
-    login_permission = db.Column(db.Boolean, default=True)
+    phone = db.Column(db.String(11), nullable=False)
+    login_permission = db.Column(db.Boolean, default=False)
     old = db.Column(db.Integer)
     password_hash = db.Column(db.String(128))
     permissions = db.relationship('Permission', secondary=u_permits, backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
+    evaluations = db.relationship('Evaluation', backref='user', lazy='dynamic')
+
+
+    def clear_permissions(self):
+        for p in self.permissions:
+            self.permissions.remove(p)
+        db.session.commit()
 
     def can(self, d=None, p=None, u=None):   # 输入3种权限值
         for x in self.permissions:
@@ -121,15 +136,19 @@ class User(UserMixin, db.Model):
             return True
         return False
 
+    def is_admin(self):
+        p = Permission.query.filter_by(name='系统管理员').first()
+        if p:
+            return self.can(p.permit_d, p.permit_p, p.permit_u)
+        else:
+            return self.can(65535, 65535, 65535)
 
-
-
-
-
-
-    # @property
-    # def old(self):
-    #     return calculate_age(self.birth)
+    @staticmethod
+    def get_ages():
+        us = User.query.all()
+        for u in us:
+            u.old = calculate_age(u.birth)
+        db.session.commit()
 
     @property
     def password(self):
@@ -228,6 +247,15 @@ class Permission(db.Model):
             permission = Permission(name=x, permit_d=p[0], permit_p=p[1], permit_u=p[2])
             db.session.add(permission)
         db.session.commit()
+
+
+class Evaluation(db.Model):
+    __tablename__ = 'evaluations'
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    rank = db.Column(db.Integer, nullable=False)
+    remark = db.Column(db.Text)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 
 

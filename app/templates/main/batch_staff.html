@@ -29,8 +29,10 @@
                    alert('文件格式不符合！请重新选择excel格式文件！');
                    return false;
                 }
+                if (confirm('文件已经准备完毕，确定将立即添加用户，是否继续？')==false){
+                    return;
+                }
                 var data = new FormData();
-                alert('begin to select file');
                 data.append('file-excel',$('input#file-excel').get(0).files[0]);
                 $.ajax({url: "{{ url_for('main.add_to_sql_by_excel') }}",
                     type: 'POST',
