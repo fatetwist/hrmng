@@ -237,17 +237,7 @@ def remove_staff():
     return json.dumps({'status': 1, 'message': '操作成功！'})
 
 
-@main.route('/edit-staff/<int:id>')
-@login_required
-def edit_staff(id):
-    u = User.query.get(id)
 
-    if not u:
-        abort(404)
-
-    # 检查权限
-    current_user.verify_permission_by_user(u)
-    return render_template('edit_staff.html', user=u)
 
 
 @main.route('/options')

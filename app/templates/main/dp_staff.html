@@ -246,12 +246,17 @@
 
         {% endif %}
 
-        {% if current_user.can(u=permit_u.ADD_AND_REMOVE) %}
+
             <td>
+            {% if current_user.can(u=permit_u.EDIT) %}
             <button class="btn btn-default btn-edit" id="{{ u.id }}">编辑</button>
+                                    {% endif %}
+
+                {% if current_user.can(u=permit_u.ADD_AND_REMOVE) %}
             <button class="btn btn-danger delete_staff" id="{{ u.id }}">删除成员</button>
+                        {% endif %}
+
             </td>
-        {% endif %}
 
     </tr>
     {% endfor %}

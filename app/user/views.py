@@ -105,7 +105,7 @@ def edit_staff():
             login_permission = False
         # 检查权限（读）
         # 检查权限（写）
-        if not current_user.can(department.permit, position.permit, permit_u.ADD_AND_REMOVE):
+        if not current_user.can(department.permit, position.permit, permit_u.EDIT):
             res = {'status': 0, 'message': '权限不足，无法修改！'}
             return json.dumps(res)
         # 开始修改信息
@@ -145,9 +145,8 @@ def edit_staff():
             abort(404)
 
         # 检查权限
-        if not current_user.can(u.department.permit,u.position.permit,permit_u.ADD_AND_REMOVE):
-            flash('您的权限不足！')
-            return redirect(url_for('main.index'))
+        if not current_user.can(u.department.permit,u.position.permit,permit_u.EDIT):
+            abort(403)
         # 获取权限对象
         ps = Permission.query.all()
 
@@ -358,6 +357,7 @@ def evaluate():
         if not u_id:
             res = {'status': 0, 'message': '没有找到用户！'}
             return json.dumps(res)
+
         # 验证本月是否评价
         es = u.evaluations
         t = date.today()
@@ -366,6 +366,11 @@ def evaluate():
             if d.year == t.year and d.month == t.month:
                 res = {'status': 0, 'message': '本月已经评价过！'}
                 return json.dumps(res)
+
+        # 验证评价权限
+        if not current_user.can(u.department.permit, u.position.permit, permit_u.EVALUATE):
+            res = {'status': 0, 'message': '您没有权限评论该用户！'}
+            return json.dumps(res)
 
         # 处理数据并提交到数据库
         d = date.today()
