@@ -120,6 +120,9 @@ class User(UserMixin, db.Model):
     def get_evaluation(self):
         try:
             e = self.evaluations.all()[-1]
+            d = date.today()
+            if not(e.date.year == d.year and e.date.month == d.month):
+                e = None
         except IndexError:
             e = None
         return e

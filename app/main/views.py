@@ -1,5 +1,5 @@
 from . import main
-from flask import redirect, url_for, render_template, request, flash, abort
+from flask import redirect, url_for, render_template, request, flash, abort, send_from_directory, app
 from flask_login import login_required, current_user
 from ..models import Department, User,  permit_u,  Position, get_birth_date
 from ..decorators import admin_required
@@ -243,3 +243,8 @@ def options():
     return render_template('main/options.html')
 
 
+@main.route('/download/<string:file>')
+def download(file):
+    directory = os.getcwd()
+    directory = os.path.join(directory, 'app','static', 'resources')
+    return send_from_directory(directory,file, as_attachment=True)

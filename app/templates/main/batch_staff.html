@@ -271,7 +271,11 @@
         };
         xmlhttp.open("GET","/batch_staff/getdepartandposition",true);
         xmlhttp.send();
-
+        
+        /* 下载模板文件 */
+        $('button#download-model').click(function () {
+            window.open("{{ url_for('main.download',file='model.xlsx') }}")
+        })
         })
 
 
@@ -324,7 +328,7 @@
         </tr>
     </table>
     <div class="batch_btn" style="text-align: right;">
-        <button id="add-to-sql" style="margin: 20px;"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span>提交</button>
+        <button class="btn2-default" id="add-to-sql" style="margin: 20px;"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> 提交</button>
     </div>
         <div id="div-input" class="container">
 <div class="input-group col-md-4" id="div-add">
@@ -359,14 +363,15 @@
     </div>
 
     <div style="border: 1px grey;">
-        <button id="add"><span class="glyphicon glyphicon-plus" aria-hidden="true">添加</span></button>
+        <button class="btn2-default" id="add"><span class="glyphicon glyphicon-plus" aria-hidden="true">添加</span></button>
         </div>
             </div>
     <h3>二、文档录入</h3>
     </div>
         <lable>请上传Excel文件：</lable><input type="file" id="file-excel" style="display: inline-block;"><br>
 
-        <button id="btn-upload" style="margin:10px;">立即上传</button>
+        <button class="btn2-default" id="btn-upload" style="margin:10px;">立即上传</button>
+        <button class="btn2-default" id="download-model" style="margin:10px;">下载模板文件</button>
         <div class="panel panel-default">
             <div class="panel-body">
                 <table class="table" id="table-res">
