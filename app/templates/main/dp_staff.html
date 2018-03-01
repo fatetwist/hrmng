@@ -162,8 +162,24 @@
             $('button#evaluate').click(function(){
                 window.open("{{ url_for('user.evaluate') }}"+"?id="+$(this).parent().parent().attr('id'));
             })
+        /* 评价星星点亮 */
+        function change_star(tr){
 
+        var imgs = tr.children().children('span.evaluate-star').children('img');
+        var n = imgs.parent().attr('light');
+        console.log(n);
+        imgs.each(function(i,v){
+            if (i < n){
+                $(this).attr('src', "{{ url_for('static', filename='pictures/evaluate/star_ok.png') }}");
+            }
+        });
 
+    }
+        var trs = $('tr.staff');
+
+        trs.each(function () {
+            change_star($(this))
+        })
         })
     </script>
     <style>
@@ -231,9 +247,11 @@
         <th>姓名</th>
         <th>年龄</th>
         <th>联系电话</th>
+        <th>本月评价</th>
+        <th>操作</th>
     </tr>
     {% for u in dp_staff %}
-    <tr id="{{ u.id }}">
+    <tr class="staff" id="{{ u.id }}">
         <th>{{ u.id }}</th>
         <td>{{ u.name }}</td>
         <td>{{ u.old }}</td>
@@ -241,6 +259,13 @@
 
         {% if current_user.can(u=permit_u.EVALUATE) %}
             <td>
+            <span class="evaluate-star" light="{{ u.get_evaluation().rank }}">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+            <img src="{{ url_for('static',filename='pictures/evaluate/star_no.png') }}" alt="☆">
+        </span>
             <button class="btn btn-default" id="evaluate">综合评价</button>
             </td>
 

@@ -104,8 +104,6 @@ u_permits = db.Table('u_permits',
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
-
-
     id = db.Column(db.Integer, primary_key=True, unique=True)
     name = db.Column(db.String(64), nullable=False)
     position_id = db.Column(db.Integer, db.ForeignKey('positions.id'))
@@ -119,6 +117,12 @@ class User(UserMixin, db.Model):
     permissions = db.relationship('Permission', secondary=u_permits, backref=db.backref('users', lazy='dynamic'), lazy='dynamic')
     evaluations = db.relationship('Evaluation', backref='user', lazy='dynamic')
 
+    def get_evaluation(self):
+        try:
+            e = self.evaluations.all()[-1]
+        except IndexError:
+            e = None
+        return e
 
     def clear_permissions(self):
         for p in self.permissions:
@@ -256,6 +260,4 @@ class Evaluation(db.Model):
     rank = db.Column(db.Integer, nullable=False)
     remark = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-
-
 

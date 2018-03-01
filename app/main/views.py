@@ -237,9 +237,6 @@ def remove_staff():
     return json.dumps({'status': 1, 'message': '操作成功！'})
 
 
-
-
-
 @main.route('/options')
 @admin_required
 def options():

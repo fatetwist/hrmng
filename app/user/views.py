@@ -343,7 +343,6 @@ def has_permit():
     return render_template('user/has_permit_user.html', p=p)
 
 
-
 @user.route('/evaluate', methods=['POST', 'GET'])
 @login_required
 def evaluate():
@@ -379,7 +378,6 @@ def evaluate():
         db.session.commit()
         res = {'status': 1, 'message': '提交成功！'}
         return json.dumps(res)
-
 
     else:
         u_id = request.args.get('id', None, type=int)
