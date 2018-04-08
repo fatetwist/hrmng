@@ -248,3 +248,8 @@ def download(file):
     directory = os.getcwd()
     directory = os.path.join(directory, 'app','static', 'resources')
     return send_from_directory(directory,file, as_attachment=True)
+
+
+@main.route('/hahaha')
+def hahaha():
+    return render_template('main/hahaha.html')

@@ -185,9 +185,10 @@ def verify_password():
 
 
 @user.route('/permit')
-@admin_required
 def permit():
-
+    if not current_user.is_admin():
+        flash('该板块只有系统管理员可以进入！')
+        return redirect(url_for('main.index'))
     return render_template('/user/permit.html')
 
 

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>一个神奇的网页</title>
+</head>
+<body>
+<pre>
+#include &lt;stdio.h&gt;
+
+int main(){
+	int n=0, i=0, j=0;
+	scanf("%d", &n);
+	for(i=0;i&lt;n;i++){
+		for(j=0;j&lt;n-(i-1);j++)
+			printf(" ");
+		for(j=0;j&lt;i*2+1;j++)
+			printf("*");
+		printf("\n");
+	}
+}
+</pre>
+
+</body>
+</html>

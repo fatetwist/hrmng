@@ -4,6 +4,8 @@ from . import db
 from flask_login import UserMixin, AnonymousUserMixin,current_user
 from . import login_manager
 from datetime import date
+
+
 class AnonymousUser(AnonymousUserMixin):
     def can(self, *args,**kwargs):
         return False
@@ -109,8 +111,8 @@ class User(UserMixin, db.Model):
     position_id = db.Column(db.Integer, db.ForeignKey('positions.id'))
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     address = db.Column(db.Text)
-    birth = db.Column(db.Date, nullable=False)
-    phone = db.Column(db.String(11), nullable=False)
+    birth = db.Column(db.Date)
+    phone = db.Column(db.String(11))
     login_permission = db.Column(db.Boolean, default=False)
     old = db.Column(db.Integer)
     password_hash = db.Column(db.String(128))
@@ -167,8 +169,6 @@ class User(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
-
-
 
     @staticmethod
     def re_old():
@@ -263,4 +263,5 @@ class Evaluation(db.Model):
     rank = db.Column(db.Integer, nullable=False)
     remark = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
 

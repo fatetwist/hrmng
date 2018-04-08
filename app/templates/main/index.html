@@ -58,7 +58,7 @@
         <li><a href="/hrmanage/purchase" ><b><img src="{{ url_for('static',filename='pictures/menu/buy.png') }}" /></b><span>采购部</span></a></li>
         <li><a href="/hrmanage/logistics" ><b><img src="{{ url_for('static',filename='pictures/menu/logistics.png') }}" /></b><span>后勤部</span></a></li>
         <li><a href="{{ url_for('main.batch_staff') }}" ><b><img src="{{ url_for('static',filename='pictures/menu/logistics.png') }}" /></b><span>批量导入</span></a></li>
-        {% if current_user.is_admin() %}<li><a href="{{ url_for('user.permit') }}" ><b><img src="{{ url_for('static',filename='pictures/menu/director.png') }}" /></b><span>权限管理</span></a></li>{% endif %}
+        <li><a href="{{ url_for('user.permit') }}" ><b><img src="{{ url_for('static',filename='pictures/menu/director.png') }}" /></b><span>权限管理</span></a></li>
 {#        {% if current_user.is_admin() %}<li><a href="{{ url_for('main.options') }}" ><b><img src="{{ url_for('static',filename='pictures/menu/director.png') }}" /></b><span>系统设置</span></a></li>{% endif %}#}
     </ul>
     </div>
